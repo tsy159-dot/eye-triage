@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Eye Casualty Triage Assistant</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Eye Triage">
+<meta name="theme-color" content="#0c4d54">
+<style>
+  :root{
+    --bg:#eaeef0; --ink:#15232c; --ink2:#54636e; --card:#ffffff; --line:#dce4e8;
+    --brand:#0f5f68; --brand-2:#0c4d54; --user:#d6e9ea; --user-ink:#0e3a3f;
+    --t1:#c5362f; --t2:#cf761b; --t3:#e0a800; --t3ink:#3a2c00;
+    --t4:#2f6fae; --t5:#5c6a76; --safe:#0f5f68;
+    --radius:16px; --shadow:0 1px 2px rgba(20,40,55,.06), 0 6px 20px rgba(20,40,55,.06);
+    --maxw:720px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased;
+    display:flex; flex-direction:column; min-height:100dvh;
+  }
+  header{
+    background:linear-gradient(180deg,var(--brand),var(--brand-2)); color:#fff;
+    padding:14px 16px calc(14px + env(safe-area-inset-top)); padding-top:max(14px,env(safe-area-inset-top));
+    position:sticky; top:0; z-index:5; box-shadow:0 2px 10px rgba(12,77,84,.25);
+  }
+  .head-row{max-width:var(--maxw); margin:0 auto; display:flex; align-items:center; gap:10px}
+  .logo{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.16);display:grid;place-items:center;flex:0 0 auto}
+  .logo svg{width:20px;height:20px;display:block}
+  h1{font-size:17px; margin:0; font-weight:650; letter-spacing:.1px}
+  .sub{font-size:12.5px; opacity:.85; margin-top:1px}
+  .keybtn{background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.25);
+    border-radius:999px; padding:7px 12px; font-size:12.5px; font-weight:600; cursor:pointer}
+  .keybtn:hover{background:rgba(255,255,255,.22)}
+  .disclaimer{
+    max-width:var(--maxw); margin:0 auto; width:100%; padding:9px 16px; font-size:12.5px; color:var(--ink2);
+    display:flex; gap:8px; align-items:flex-start; border-bottom:1px solid var(--line); background:#f6f8f9;
+  }
+  .disclaimer b{color:var(--ink)}
+  main{flex:1 1 auto; width:100%; max-width:var(--maxw); margin:0 auto; padding:16px 14px 8px; overflow:visible}
+  .transcript{display:flex; flex-direction:column; gap:12px}
+  .row{display:flex; width:100%}
+  .row.user{justify-content:flex-end}
+  .bubble{max-width:88%; padding:12px 14px; border-radius:14px; box-shadow:var(--shadow); animation:rise .22s ease both}
+  @media (prefers-reduced-motion:reduce){.bubble{animation:none}}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .bubble.bot{background:var(--card); border:1px solid var(--line); border-top-left-radius:5px}
+  .bubble.user{background:var(--user); color:var(--user-ink); border:1px solid #bcdadb; border-top-right-radius:5px; font-weight:550}
+  .bubble.bot .q{font-weight:600; font-size:16px}
+  .bubble.bot .qhelp{font-size:13.5px; color:var(--ink2); margin-top:6px}
+  .options{display:flex; flex-direction:column; gap:9px; margin-top:2px}
+  .opt{
+    text-align:left; width:100%; background:var(--card); border:1.5px solid #cfdade; color:var(--ink);
+    border-radius:13px; padding:13px 14px; font-size:15.5px; font-weight:550; cursor:pointer;
+    transition:border-color .12s, background .12s, transform .04s; box-shadow:var(--shadow); line-height:1.35;
+  }
+  .opt:hover{border-color:var(--brand); background:#f4fafa}
+  .opt:active{transform:translateY(1px)}
+  .opt:focus-visible{outline:3px solid #7fb7bd; outline-offset:2px}
+  .opt .sub{display:block; font-weight:450; font-size:13px; color:var(--ink2); margin-top:4px}
+  .opt.rf{border-color:#e6c9c7}
+  .opt.rf:hover{border-color:var(--t1); background:#fdf4f3}
+  .opt.none{border-style:dashed; border-color:#bcc8ce; font-weight:600}
+  .opt.none:hover{border-color:var(--brand); background:#f4fafa}
+  .rf-lead{font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--t1); margin-bottom:2px}
+
+  /* Outcome card */
+  .outcome{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); animation:rise .24s ease both}
+  .banner{padding:14px 16px; color:#fff}
+  .banner .tlabel{font-size:17px; font-weight:750; letter-spacing:.2px; display:flex; align-items:center; gap:8px}
+  .banner .tsub{font-size:13px; opacity:.92; margin-top:3px}
+  .t1 .banner{background:var(--t1)} .t2 .banner{background:var(--t2)}
+  .t3 .banner{background:var(--t3); color:var(--t3ink)} .t3 .banner .tsub{opacity:.8}
+  .t4 .banner{background:var(--t4)} .t5 .banner{background:var(--t5)}
+  .o-body{padding:14px 16px 16px}
+  .o-title{font-size:16.5px; font-weight:650; margin:0 0 10px}
+  .sec{margin-top:12px}
+  .sec .lab{font-size:11.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--ink2); margin-bottom:3px}
+  .sec .val{font-size:15px}
+  .dolist{margin:4px 0 0; padding-left:18px}
+  .dolist li{margin:3px 0}
+  .pill{display:inline-block; font-size:11.5px; font-weight:700; color:#fff; background:var(--ink2); border-radius:999px; padding:2px 9px; margin-left:6px; vertical-align:middle}
+  .paed-note{margin-top:12px; background:#eef5f6; border:1px solid #cfe2e4; border-radius:11px; padding:10px 12px; font-size:13.5px; color:#0e3a3f}
+  .note{margin-top:12px; background:#fff7e6; border:1px solid #f0dca6; border-radius:11px; padding:10px 12px; font-size:13.5px; color:#5a4600}
+  .safety{margin-top:14px; background:#eef5f6; border:1px solid #cfe2e4; border-left:4px solid var(--safe); border-radius:11px; padding:11px 13px; font-size:13.5px; color:#0e3a3f}
+  .safety b{color:#0b343a}
+  .o-actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px}
+  .o-actions button{flex:1 1 auto; min-width:120px}
+
+  /* Footer controls */
+  footer{position:sticky; bottom:0; z-index:5; background:linear-gradient(180deg,rgba(234,238,240,0),var(--bg) 32%);
+    padding:8px 14px calc(10px + env(safe-area-inset-bottom)); }
+  .ctrls{max-width:var(--maxw); margin:0 auto; display:flex; gap:8px}
+  .btn{border-radius:12px; padding:11px 14px; font-size:14.5px; font-weight:600; cursor:pointer; border:1.5px solid var(--line); background:#fff; color:var(--ink)}
+  .btn:hover{border-color:var(--brand)}
+  .btn:disabled{opacity:.45; cursor:default; border-color:var(--line)}
+  .btn.primary{background:var(--brand); color:#fff; border-color:var(--brand)}
+  .btn.primary:hover{background:var(--brand-2)}
+  .btn.ghost{background:transparent}
+  .ctrls .btn{flex:1 1 auto}
+
+  /* Modal (urgency key) */
+  .modal-wrap{position:fixed; inset:0; background:rgba(13,30,36,.5); display:none; align-items:center; justify-content:center; padding:18px; z-index:20}
+  .modal-wrap.show{display:flex}
+  .modal{background:#fff; border-radius:16px; max-width:440px; width:100%; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.3); max-height:86dvh; overflow:auto}
+  .modal h2{margin:0 0 4px; font-size:16px}
+  .modal p{margin:0 0 12px; font-size:13px; color:var(--ink2)}
+  .keyrow{display:flex; gap:10px; align-items:flex-start; padding:9px 0; border-top:1px solid var(--line)}
+  .swatch{width:16px;height:16px;border-radius:5px;flex:0 0 auto;margin-top:2px}
+  .keyrow .kt{font-weight:650; font-size:14px}
+  .keyrow .kd{font-size:12.5px; color:var(--ink2)}
+  .modal .btn{width:100%; margin-top:14px}
+  .copied{font-size:12.5px; color:var(--brand); font-weight:600; margin-top:8px; display:none}
+  .copied.show{display:block}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-row">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+    <div>
+      <h1>Eye Casualty Triage Assistant</h1>
+      <div class="sub">Step-by-step guide for staff</div>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:8px">
+      <button class="keybtn" id="keyBtn" type="button">Urgency key</button>
+    </div>
+  </div>
+</header>
+
+<div class="disclaimer">
+  <span>ℹ️</span>
+  <span><b>Decision support only.</b> This follows local emergency-eye triage guidance, but your clinical judgement and senior / on-call advice always take priority. Out of hours, the on-call eye doctor decides priority. It does not give a diagnosis.</span>
+</div>
+
+<main>
+  <div id="guidedView">
+    <div class="transcript" id="transcript" aria-live="polite"></div>
+  </div>
+</main>
+
+<footer id="guidedFooter">
+  <div class="ctrls">
+    <button class="btn ghost" id="backBtn" type="button">← Back</button>
+    <button class="btn" id="restartBtn" type="button">Start over</button>
+  </div>
+</footer>
+
+<div class="modal-wrap" id="keyModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Urgency key">
+    <h2>What the colours mean</h2>
+    <p>How soon the patient needs to be seen.</p>
+    <div class="keyrow" style="border-top:none"><span class="swatch" style="background:#c5362f"></span><div><div class="kt">Red — Emergency</div><div class="kd">See now / same session. Out of hours: phone the on-call eye team.</div></div></div>
+    <div class="keyrow"><span class="swatch" style="background:#cf761b"></span><div><div class="kt">Orange — Within 24 hours</div><div class="kd">Arrange to be seen in eye casualty within a day.</div></div></div>
+    <div class="keyrow"><span class="swatch" style="background:#e0a800"></span><div><div class="kt">Amber — Within 3 days</div><div class="kd">Out of hours may wait overnight / weekend at on-call discretion.</div></div></div>
+    <div class="keyrow"><span class="swatch" style="background:#2f6fae"></span><div><div class="kt">Blue — Fast track / within a few days</div><div class="kd">Dedicated clinic pathway (e.g. retina / macula imaging).</div></div></div>
+    <div class="keyrow"><span class="swatch" style="background:#5c6a76"></span><div><div class="kt">Grey — Not an eye-casualty emergency</div><div class="kd">Redirect (optician / pharmacy / GP / other), as shown.</div></div></div>
+    <button class="btn primary" id="keyClose" type="button">Got it</button>
+  </div>
+</div>
+
+<script>
+/* ====================== TRIAGE FLOW DATA ======================
+   Built from the merged Sunderland + Newcastle triage standard.
+   Tiers: t1 emergency / t2 within 24h / t3 within 3 days /
+          t4 fast track-few days / t5 not for eye casualty.
+   Plain language is used throughout for non-specialist staff.            */
+
+const FLOW = {
+  /* ---------- 1. RED-FLAG SAFETY CHECK ---------- */
+  redflags:{type:'rf',
+    q:`Let's start with a quick safety check. Tap anything that is happening to the patient right now. If none apply, tap "None of these".`,
+    items:[
+      {t:`Chemical, cleaning product or any liquid splashed into the eye`, help:`Burns can damage the eye fast.`, out:'o_chem'},
+      {t:`Something hit, pierced or cut the eye, or a serious eye injury`, help:`e.g. sharp object, high-speed metal, deep cut.`, out:'o_penetrate'},
+      {t:`Sudden COMPLETE loss of sight in one or both eyes in the last 6 hours`, out:'o_suddenLoss'},
+      {t:`Sudden NEW double vision (seeing two of things)`, out:'diplopia_age'},
+      {t:`Very severe eye pain WITH feeling sick / vomiting, a red eye and blurred vision`, help:`Can be a sudden glaucoma attack.`, out:'o_aac'},
+      {t:`Eye looks pushed forward / bulging, with a hot swollen lid and the patient is unwell or feverish`, help:`Infection behind the eye.`, out:'o_orbital'},
+      {t:`After recent eye surgery: new pain, redness or loss of vision`, help:`Possible infection inside the eye.`, out:'o_postopRedFlag'},
+      {t:`A child who is very unwell, drowsy or feverish`, out:'o_paedSick'},
+    ],
+    none:'chief', noneLabel:`None of these — continue`},
+
+  /* ---------- 2. CHIEF COMPLAINT ---------- */
+  chief:{type:'q',
+    q:`What is the MAIN problem with the patient's eye?`,
+    opts:[
+      {t:`Injury`, sub:`Hit, splash, foreign body, scratch`, next:'trauma'},
+      {t:`Vision change`, sub:`Loss, blurring, double vision, flashes or floaters`, next:'vision'},
+      {t:`Pain`, sub:`The eye hurts`, next:'pain'},
+      {t:`Headache with eye or vision symptoms`, next:'headache'},
+      {t:`Eyelid or around the eye`, sub:`Swelling, drooping, lump, bulging, rash`, next:'lids'},
+      {t:`Red eye or surface problem`, sub:`Redness, discharge, gritty, contact lens`, next:'cornea'},
+      {t:`Recent eye surgery problem`, next:'postop'},
+      {t:`Pupil, optic disc, or other`, next:'other'},
+      {t:`Eye pressure / glaucoma concern`, next:'iop'},
+      {t:`The patient is a child (under 16)`, next:'paed'},
+      {t:`Not sure`, next:'o_notsure'},
+    ]},
+
+  /* ---------- TRAUMA ---------- */
+  trauma:{type:'q', q:`What kind of injury was it?`, opts:[
+    {t:`Blunt injury`, sub:`e.g. punch, ball, fall, elbow`, next:'trauma_blunt'},
+    {t:`Something in the eye / scratch / foreign body`, next:'trauma_fb'},
+    {t:`Cut to the eyelid`, next:'o_lidlac'},
+    {t:`Chemical splash`, next:'o_chem'},
+    {t:`Sharp / penetrating injury`, next:'o_penetrate'},
+  ]},
+  trauma_blunt:{type:'q', q:`After the blunt injury, is any of these present?`, opts:[
+    {t:`Loss or blurring of vision`, next:'o_bluntVL'},
+    {t:`Blood pooled in the front of the eye, over the coloured part (iris)`, sub:`A visible blood level — this is a "hyphaema".`, next:'o_hyphaema'},
+    {t:`None of those — eye looks okay and vision is normal`, next:'o_bluntNoVL'},
+  ]},
+  trauma_fb:{type:'q', q:`Which best describes it?`, opts:[
+    {t:`Something may have flown INTO the eye at speed`, sub:`e.g. grinding, hammering metal, strimming — a deeper foreign body is possible.`, next:'o_orbitalFB'},
+    {t:`A feeling of something in the eye, or a surface scratch`, sub:`e.g. branch, fingernail, dust, eyelash.`, next:'o_cornealFB'},
+  ]},
+
+  /* ---------- VISION ---------- */
+  vision:{type:'q', q:`Which best describes the vision problem?`, opts:[
+    {t:`Came on SUDDENLY in the last 12 hours`, sub:`Loss or change of vision`, next:'vision_sudden'},
+    {t:`Flashes of light and / or new floaters`, next:'vision_ff'},
+    {t:`Gradual change over days to weeks`, next:'vision_gradual'},
+    {t:`Distortion (straight lines look wavy / bent) or a missing patch`, next:'o_distortion'},
+    {t:`Double vision`, next:'diplopia_age'},
+    {t:`Already told by an optician / eye doctor: retinal detachment, or new wet AMD / vein occlusion`, next:'vision_known'},
+  ]},
+  vision_sudden:{type:'q', q:`Is the sudden vision change still there, or has it settled?`, opts:[
+    {t:`Still there now`, next:'o_suddenChange'},
+    {t:`It came and then fully went away`, sub:`Vision is back to normal now.`, next:'o_suddenResolved'},
+  ]},
+  vision_ff:{type:'q', q:`With the flashes / floaters, is any of these present?`, opts:[
+    {t:`Loss of vision, or a "curtain" or shadow over part of the vision`, next:'o_ffVL'},
+    {t:`Short-sighted (strong distance glasses), OR previous retinal tear / detachment, OR family history of retinal detachment`, sub:`These raise the risk.`, next:'o_ffRisk'},
+    {t:`None of those — just new flashes / floaters`, next:'o_ffNoRisk'},
+  ]},
+  vision_gradual:{type:'q', q:`How long has the gradual change been going on?`, opts:[
+    {t:`Less than about 4 weeks, and no severe headache / scalp tenderness / jaw pain`, next:'o_gradualShort'},
+    {t:`More than 4 weeks, with no other symptoms`, next:'o_gradualLong'},
+  ]},
+  vision_known:{type:'q', q:`What were they told?`, opts:[
+    {t:`Retinal detachment, diagnosed by an eye doctor`, next:'vision_rd'},
+    {t:`New wet AMD, or new vein occlusion (referred by optician)`, next:'o_wetAMD'},
+  ]},
+  vision_rd:{type:'q', q:`Is the CENTRAL vision (looking straight ahead) still okay, or already lost?`,
+    opts:[
+      {t:`Central vision is still okay`, sub:`They can still see straight ahead — this is more urgent to save.`, next:'o_rdMaculaOn'},
+      {t:`Central vision is already lost or very poor`, next:'o_rdMaculaOff'},
+      {t:`Not sure`, sub:`We'll treat it as the more urgent option.`, next:'o_rdMaculaOn'},
+    ]},
+
+  /* ---------- PAIN ---------- */
+  pain:{type:'q', q:`How bad is the eye pain?`, opts:[
+    {t:`Severe (7–10 out of 10)`, next:'pain_severe'},
+    {t:`Moderate (4–6 out of 10)`, next:'o_painMod'},
+    {t:`Mild (1–3 out of 10)`, next:'pain_mild'},
+  ]},
+  pain_severe:{type:'q', q:`With the severe pain, is any of these present?`, opts:[
+    {t:`Red eye, blurred vision, feeling sick / vomiting, maybe seeing halos round lights`, sub:`Possible sudden glaucoma attack.`, next:'o_aac'},
+    {t:`Severe pain with other eye symptoms`, next:'o_painSevere'},
+  ]},
+  pain_mild:{type:'q', q:`With the mild pain, which fits best?`, opts:[
+    {t:`Wears contact lenses AND the eye is red`, sub:`Infection risk.`, next:'o_clRed'},
+    {t:`The pain wakes them at night`, next:'o_painNight'},
+    {t:`Sensitive to light, but vision is normal`, next:'o_photophobia'},
+    {t:`Mild, eases with painkillers, vision normal`, next:'o_painMild'},
+    {t:`Dry / gritty, no vision change and no injury`, next:'o_dryEye'},
+  ]},
+
+  /* ---------- HEADACHE ---------- */
+  headache:{type:'q', q:`Which best fits the headache?`, opts:[
+    {t:`Headache + scalp tender when brushing hair / jaw aches when chewing / shoulder-hip stiffness — AND blurred, double or lost vision, or brief vision blackouts`, sub:`Possible giant cell arteritis.`, next:'o_gca'},
+    {t:`Severe headache (7–10) with eye symptoms`, next:'o_headSevere'},
+    {t:`Headache with red eye, blurred vision and nausea / vomiting`, next:'o_aac'},
+    {t:`Sudden loss of vision, cause unknown — more than 6 hours but within 24 hours`, next:'o_headVL24'},
+    {t:`Scalp / jaw / stiffness features, but NO vision symptoms`, next:'o_gcaNoVisual'},
+    {t:`Headache only, no eye or vision symptoms`, next:'o_headacheOnly'},
+  ]},
+
+  /* ---------- LIDS / FACIAL / ORBIT ---------- */
+  lids:{type:'q', q:`Which best describes it?`, opts:[
+    {t:`Swollen or red eyelid`, next:'lids_swollen'},
+    {t:`Eyelid drooping on one side`, next:'lids_ptosis'},
+    {t:`Eye looks pushed forward / bulging`, next:'lids_proptosis'},
+    {t:`Painful blistering rash on one side of the forehead / around the eye`, sub:`Shingles.`, next:'lids_zoster'},
+    {t:`Painful red tender lump at the inner corner, near the nose`, sub:`Possible tear-sac infection.`, next:'o_dacryo'},
+    {t:`Lump, stye or cyst on the lid (not very painful)`, next:'o_styeChalazion'},
+    {t:`Lashes rubbing the eye, or lid turned inward`, next:'lids_lash'},
+    {t:`Watery eye`, next:'lids_watery'},
+    {t:`Itchy, puffy lids that came on suddenly`, sub:`Allergic.`, next:'o_allergic'},
+  ]},
+  lids_swollen:{type:'q', q:`Is the patient feverish / unwell, and is the eye pushed forward or movement painful?`, opts:[
+    {t:`Feverish / unwell AND eye pushed forward, painful eye movements or double vision`, next:'o_orbital'},
+    {t:`Has a temperature and a swollen lid, but the eye looks normal and moves normally`, next:'o_preseptal'},
+    {t:`No fever, but the lid is moderately to severely swollen`, next:'o_swollenApyrexial'},
+    {t:`No fever, only mild swelling, white eye`, next:'o_swollenMild'},
+  ]},
+  lids_ptosis:{type:'q', q:`Along with the drooping lid, is the pupil a different size and / or is there double vision?`, opts:[
+    {t:`Yes — different-sized pupil and / or double vision`, sub:`Possible nerve problem.`, next:'o_3rdNerve'},
+    {t:`No — just the drooping lid`, next:'o_ptosisIsolated'},
+  ]},
+  lids_proptosis:{type:'q', q:`Is the vision affected?`, opts:[
+    {t:`Yes — vision is reduced or lost`, next:'o_proptosisVL'},
+    {t:`No — vision is okay`, next:'o_proptosisNoVL'},
+  ]},
+  lids_zoster:{type:'q', q:`Does it involve the eye, or is it only mild skin rash?`, opts:[
+    {t:`Involves the eyeball / significant lid swelling / eye red or painful`, next:'o_zosterEye'},
+    {t:`Mild skin rash only, eye not involved`, next:'o_zosterSkin'},
+  ]},
+  lids_lash:{type:'q', q:`Which is it?`, opts:[
+    {t:`Lashes rubbing the eye`, next:'o_trich'},
+    {t:`Lid turned inward, but no eye-surface problem`, next:'o_entropion'},
+  ]},
+  lids_watery:{type:'q', q:`Any other eye symptoms with the watering?`, opts:[
+    {t:`Yes — gritty feeling, redness, light sensitivity or pain`, next:'o_wateryEyeSx'},
+    {t:`No — just watery, nothing else`, next:'o_wateryEyeNoSx'},
+  ]},
+
+  /* ---------- CORNEA / CONJUNCTIVA ---------- */
+  cornea:{type:'q', q:`Which best describes the red eye / surface problem?`, opts:[
+    {t:`The clear front of the eye looks cloudy / hazy or has a white spot, with pain or light sensitivity`, next:'cornea_cloudy'},
+    {t:`Wears contact lenses and the eye is red or painful`, next:'o_clRed'},
+    {t:`Discharge / sticky eye / conjunctivitis`, next:'cornea_conj'},
+    {t:`Redness around the edge of the coloured part of the eye`, sub:`Around the "limbus".`, next:'o_limbus'},
+    {t:`A gritty "something in the eye" feeling`, next:'o_fbSensation'},
+    {t:`Mild redness, not much discomfort`, next:'cornea_mild'},
+    {t:`Bright blood-red patch on the white of the eye, no pain, vision normal`, next:'o_subconj'},
+    {t:`Long-standing cone-shaped cornea, or a fleshy growth over the cornea`, next:'o_keratoconus'},
+  ]},
+  cornea_cloudy:{type:'q', q:`How severe is it?`, opts:[
+    {t:`Cloudy / white cornea WITH significant pain and redness — or a contact-lens wearer`, sub:`Possible infection of the cornea.`, next:'o_keratitis'},
+    {t:`Hazy cornea with redness, but less severe`, next:'o_hazy'},
+  ]},
+  cornea_conj:{type:'q', q:`Which fits best?`, opts:[
+    {t:`Yellow / green discharge, both eyes red, started within about 2 weeks`, next:'o_bacterialConj'},
+    {t:`Conjunctivitis NOT settling after 2+ weeks of treatment`, next:'o_conjNonResolving'},
+    {t:`Watery, itchy, allergic-type`, next:'o_allergic'},
+  ]},
+  cornea_mild:{type:'q', q:`With the mild redness, is there light sensitivity?`, opts:[
+    {t:`Yes — light sensitivity, but vision is normal`, next:'o_mildPhoto'},
+    {t:`No — mild redness, no real discomfort`, next:'o_mildRedness'},
+  ]},
+
+  /* ---------- OTHER ---------- */
+  other:{type:'q', q:`Which applies?`, opts:[
+    {t:`Pupils look different sizes`, next:'other_pupil'},
+    {t:`Swollen optic discs noted (on examination or a photo)`, next:'other_discs'},
+    {t:`A new abnormal pupil WITH vision symptoms`, next:'o_pupilVisual'},
+    {t:`Suspected eye or retinal cancer`, next:'o_cancer'},
+    {t:`Feeling very unwell with eye symptoms, hot swollen lid and fever`, next:'o_orbital'},
+  ]},
+  other_pupil:{type:'q', q:`With the unequal pupils, is any of these present?`, opts:[
+    {t:`Drooping lid and / or double vision`, next:'o_3rdNerve'},
+    {t:`Vision symptoms, but no lid droop and no double vision`, next:'o_pupilVisual'},
+    {t:`Completely asymptomatic — no lid droop, no double vision, vision normal`, next:'o_pupilAsx'},
+  ]},
+  other_discs:{type:'q', q:`With the swollen discs, is there new vision change, double vision, significant new headache, or feeling unwell?`, opts:[
+    {t:`Yes — any of those`, next:'o_discsSymptomatic'},
+    {t:`No — found by chance, patient well, no symptoms`, next:'o_discsAsx'},
+  ]},
+
+  /* ---------- IOP / GLAUCOMA ---------- */
+  iop:{type:'q', q:`What is the concern?`, opts:[
+    {t:`Acute attack: red eye, blurred vision, large / unreactive pupil, cloudy cornea, nausea / vomiting`, next:'o_aac'},
+    {t:`Measured eye pressure (IOP) is 40 mmHg or higher`, next:'o_iop40'},
+    {t:`High pressure but no symptoms / ocular hypertension / found by chance`, next:'o_iopAsx'},
+  ]},
+
+  /* ---------- PAEDIATRIC ---------- */
+  paed:{type:'q', q:`About the child — which applies? (Remember: every child should be discussed with a doctor.)`, opts:[
+    {t:`Very unwell, drowsy or feverish`, next:'o_paedSick'},
+    {t:`Red, swollen lid or eye, with a fever`, next:'paed_cellulitis'},
+    {t:`Possible non-accidental injury (safeguarding concern)`, next:'o_NAI'},
+    {t:`Newborn with a red, sticky or discharging eye`, next:'o_neonatalConj'},
+    {t:`Sudden squint (eye turning) or wobbly eyes`, next:'o_squint'},
+    {t:`White pupil, or no "red-eye" reflex in photos`, sub:`Absent red reflex.`, next:'o_redReflex'},
+    {t:`Swollen optic disc but the child is otherwise well`, next:'o_paedDisc'},
+    {t:`Another eye problem`, next:'o_paedOther'},
+  ]},
+  paed_cellulitis:{type:'q', q:`Is the eye pushed forward, are eye movements painful, or is vision affected?`, opts:[
+    {t:`Yes — any of those`, sub:`Possible spread behind the eye.`, next:'o_paedOrbital'},
+    {t:`No — lid swelling with fever, but the eye looks and moves normally`, next:'o_paedPreseptal'},
+  ]},
+
+  /* ---------- POST-OP ---------- */
+  postop:{type:'q', q:`What type of surgery did the patient have?`, opts:[
+    {t:`Inside-the-eye surgery`, sub:`Cataract, glaucoma/trabeculectomy, injection into the eye`, next:'postop_intraocular'},
+    {t:`Other eye surgery (not inside the eye)`, next:'postop_external'},
+  ]},
+  postop_intraocular:{type:'q', q:`Is any of these present?`, opts:[
+    {t:`Pain, redness, or loss of vision`, sub:`Possible infection inside the eye.`, next:'o_endophthalmitis'},
+    {t:`A white fluid level inside the eye`, sub:`"Hypopyon".`, next:'o_endophthalmitis'},
+    {t:`Vision dropped or darkened within 8 hours of surgery`, next:'o_postopDark'},
+    {t:`Vision a bit reduced within 3 days of surgery, but no pain / redness / fluid level`, next:'o_postopReducedVision'},
+    {t:`Just needs repeat drops, dry gritty eye, or known post-op swelling`, next:'o_postopRoutine'},
+  ]},
+  postop_external:{type:'q', q:`Is any of these present?`, opts:[
+    {t:`Moderate or severe pain`, next:'o_postopPain'},
+    {t:`Heavy / profuse bleeding`, next:'o_postopBleed'},
+    {t:`Sudden loss of vision`, next:'o_postopVL'},
+    {t:`Mild pain within 2 weeks of surgery`, next:'o_postopMild'},
+    {t:`No change in vision / needs a prescription / routine query`, next:'o_postopExtRoutine'},
+  ]},
+
+  /* ====================== OUTCOMES ====================== */
+  // Red flags
+  o_chem:{type:'o', tier:'t1', title:`Chemical injury to the eye`,
+    action:`See in eye casualty NOW. Out of hours: phone the on-call eye team.`,
+    concern:`A chemical can damage the eye surface quickly — speed matters.`,
+    steps:[`Start irrigating the eye with water or saline straight away — keep going for at least 20 minutes.`,`If on the phone, tell them to start rinsing at a tap NOW, before travelling in.`,`Remove contact lenses if present.`]},
+  o_penetrate:{type:'o', tier:'t1', title:`Possible penetrating / serious eye injury`,
+    action:`See in eye casualty NOW. Out of hours: phone the on-call eye team.`,
+    concern:`The eye wall may be cut open (an "open globe").`,
+    steps:[`Do NOT press on or pad the eye.`,`Cover loosely with a clean shield if available — no pressure.`,`Keep the patient nil by mouth in case surgery is needed.`]},
+  o_suddenLoss:{type:'o', tier:'t1', title:`Sudden complete loss of vision (within 6 hours)`,
+    action:`See in eye casualty NOW. Out of hours: phone the on-call eye team.`,
+    concern:`Could be a blocked blood vessel to the eye, or another sight-threatening cause — time-critical.`},
+  diplopia_age:{type:'q', q:`How old is the patient?`, help:`Age guides how urgently new double vision needs to be seen.`, opts:[
+    {t:`50 or older`, next:'diplopia_type'},
+    {t:`Under 50`, next:'o_diplopiaYoung'},
+  ]},
+  diplopia_type:{type:'q', q:`Cover one eye, then the other. Does the double vision GO AWAY when ONE eye is covered?`,
+    help:`This tells us whether it comes from one eye, or from the two eyes being out of line.`, opts:[
+    {t:`No — still double with one eye covered`, sub:`"Monocular" — usually an eye / lens cause.`, next:'diplopia_mono'},
+    {t:`Yes — it goes away when one eye is covered`, sub:`"Binocular" — the two eyes are misaligned.`, next:'diplopia_bino'},
+  ]},
+  diplopia_bino:{type:'q', q:`Any of these whole-body (systemic) symptoms?`,
+    help:`Feeling run down / tired, headache, tenderness of the scalp or temple, or jaw ache when chewing.`, opts:[
+    {t:`Yes — one or more of those`, next:'o_diplopiaGCA'},
+    {t:`No — none of those`, next:'o_diplopiaBino'},
+  ]},
+  diplopia_mono:{type:'q', q:`Any of these whole-body (systemic) symptoms?`,
+    help:`Feeling run down / tired, headache, tenderness of the scalp or temple, or jaw ache when chewing.`, opts:[
+    {t:`Yes — one or more of those`, next:'o_diplopiaGCA'},
+    {t:`No — none of those`, next:'o_diplopiaMono'},
+  ]},
+  o_diplopiaGCA:{type:'o', tier:'t1', title:`Double vision with systemic symptoms — possible giant cell arteritis`,
+    action:`See in eye casualty NOW / phone the on-call eye team. Urgent bloods and steroids may be needed per the local pathway.`,
+    concern:`Headache, scalp / temple tenderness or jaw ache alongside the double vision raises concern for giant cell arteritis — sight- and life-threatening if missed.`,
+    note:`If there is ALSO facial droop, arm weakness or slurred speech, treat as a STROKE — call 999 now.`},
+  o_diplopiaBino:{type:'o', tier:'t2', tierLabel:`Same day`, tierSub:`Arrange to be seen in eye casualty today.`, title:`Binocular double vision, no systemic symptoms`,
+    action:`Eye casualty the same day.`,
+    concern:`The two eyes are out of line (e.g. a nerve or muscle cause) — needs prompt assessment, but no systemic red flags here.`,
+    note:`If a drooping eyelid or an unequal pupil appears, or there is any weakness / facial droop / speech problem, treat as an emergency — escalate now (call 999 for stroke signs).`},
+  o_diplopiaMono:{type:'o', tier:'t5', title:`Monocular double vision, no systemic symptoms`,
+    action:`Not an eye-casualty emergency — likely a lens, focusing or surface cause. Refer to optician / routine clinic.`,
+    concern:`Double vision coming from one eye is usually due to cataract, astigmatism or dry eye rather than a nerve problem.`},
+  o_diplopiaYoung:{type:'o', tier:'t4', title:`New double vision (under 50)`,
+    action:`Fast track / within a few days — AND discuss with the on-call eye doctor to agree timing.`,
+    concern:`Under 50, giant cell arteritis is much less likely, but new double vision still needs assessment.`,
+    note:`If there is ALSO facial droop, arm weakness or slurred speech, treat as a STROKE — call 999 now.`},
+  o_aac:{type:'o', tier:'t1', title:`Possible sudden glaucoma attack (acute angle closure)`,
+    action:`See in eye casualty NOW / phone the on-call eye team. Glaucoma service to be involved.`,
+    concern:`Sudden rise in eye pressure — red painful eye, blurred vision, halos, often nausea / vomiting.`},
+  o_orbital:{type:'o', tier:'t1', title:`Possible infection behind the eye (orbital cellulitis)`,
+    action:`See NOW. Phone the on-call eye team. If the patient looks septic, involve the emergency team.`,
+    concern:`Hot swollen lid, eye pushed forward, painful movements, unwell / feverish — can become serious quickly.`},
+  o_postopRedFlag:{type:'o', tier:'t1', title:`Problem after recent eye surgery`,
+    action:`See in eye casualty NOW. Out of hours: phone the on-call eye team.`,
+    concern:`New pain, redness or vision loss after surgery can mean infection inside the eye (endophthalmitis).`},
+  o_paedSick:{type:'o', tier:'t1', title:`Child who is very unwell`, paed:true,
+    action:`Send to the Paediatric Emergency Department NOW.`,
+    concern:`A very unwell or feverish child needs urgent assessment for serious infection / sepsis.`},
+
+  // Trauma
+  o_lidlac:{type:'o', tier:'t2', title:`Eyelid cut (laceration)`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`May need repair; the eye itself must be checked for deeper injury.`},
+  o_bluntVL:{type:'o', tier:'t2', title:`Blunt eye injury with vision loss`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Possible damage to the retina, optic nerve or bleeding inside the eye.`},
+  o_hyphaema:{type:'o', tier:'t2', title:`Blood in the front of the eye (hyphaema)`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Risk of re-bleeding and a rise in eye pressure — needs review.`},
+  o_bluntNoVL:{type:'o', tier:'t3', title:`Blunt eye injury, vision normal`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Lower risk, but still worth a check.`},
+  o_orbitalFB:{type:'o', tier:'t2', title:`Possible deeper / intra-ocular foreign body`,
+    action:`Eye casualty within 24 hours. Do not assume it is only on the surface.`,
+    concern:`High-speed metal (grinding, hammering) can enter the eye — easy to miss.`},
+  o_cornealFB:{type:'o', tier:'t3', title:`Surface foreign body or scratch`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Corneal abrasion or surface foreign body — usually settles with treatment.`},
+
+  // Vision
+  o_suddenChange:{type:'o', tier:'t2', title:`Sudden vision change (still present)`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Several possible causes — needs prompt assessment.`},
+  o_suddenResolved:{type:'o', tier:'t2', title:`Sudden vision loss that fully resolved`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Can be a warning sign of a "mini-stroke" (TIA) — needs prompt assessment.`,
+    note:`If there is ALSO weakness, facial droop or speech problems, treat as a STROKE — call 999.`},
+  o_ffVL:{type:'o', tier:'t2', title:`Flashes / floaters WITH vision loss or a shadow`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Possible retinal tear or detachment.`},
+  o_ffRisk:{type:'o', tier:'t2', title:`New flashes / floaters with risk factors`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Short sight, previous tear/detachment or family history raise the risk of retinal detachment.`},
+  o_ffNoRisk:{type:'o', tier:'t3', title:`New flashes / floaters, no risk factors`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Often benign, but should be checked.`,
+    note:`If vision loss or a "curtain" appears, this becomes urgent — re-assess.`},
+  o_gradualShort:{type:'o', tier:'t3', title:`Gradual vision change (under 4 weeks)`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Gradual change with no red-flag features — review needed.`},
+  o_gradualLong:{type:'o', tier:'t5', title:`Gradual vision change for over 4 weeks`,
+    action:`Not an eye-casualty emergency — discuss with a doctor for a clinic referral, and check they are not simply due an optician review.`,
+    concern:`Long-standing, no associated symptoms.`},
+  o_distortion:{type:'o', tier:'t4', title:`New distortion / wavy lines or a missing patch`,
+    action:`Fast track / within a few days — arrange vision + imaging via the macula clinic / photography triage. If an optician is involved, they can refer to clinic.`,
+    concern:`Possible macular problem such as AMD.`},
+  o_wetAMD:{type:'o', tier:'t4', title:`New wet AMD / new vein occlusion (optician referred)`,
+    action:`Fast track / within a few days — vision + imaging, then on to the medical retina / macula clinic.`,
+    concern:`Treatable if seen promptly.`},
+  o_rdMaculaOn:{type:'o', tier:'t2', title:`Retinal detachment — central vision still present`,
+    action:`Within 24 hours — refer to the vitreo-retinal fellow (via switchboard).`,
+    concern:`Central vision is still attached — more urgent to operate before it is lost.`},
+  o_rdMaculaOff:{type:'o', tier:'t3', title:`Retinal detachment — central vision already lost`,
+    action:`Eye casualty within 3 days — refer to the vitreo-retinal fellow (via switchboard).`,
+    concern:`Central vision already detached — still needs surgery, slightly less time-critical.`},
+
+  // Pain
+  o_painSevere:{type:'o', tier:'t1', title:`Severe eye pain (7–10) with eye symptoms`,
+    action:`See in eye casualty NOW / phone the on-call eye team.`,
+    concern:`Severe pain needs prompt assessment for a serious cause.`},
+  o_painMod:{type:'o', tier:'t2', title:`Moderate eye pain (4–6)`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Moderate pain — review needed.`},
+  o_clRed:{type:'o', tier:'t2', title:`Contact-lens wearer with a red / painful eye`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Risk of a contact-lens-related corneal infection (microbial keratitis).`,
+    steps:[`Advise the patient to stop wearing the lenses now.`,`Bring the lenses and case to the appointment.`]},
+  o_painNight:{type:'o', tier:'t2', title:`Pain that wakes the patient at night`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Pain bad enough to wake them warrants prompt review.`},
+  o_photophobia:{type:'o', tier:'t3', title:`Light sensitivity, vision normal`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Light sensitivity can come from surface or inner-eye inflammation.`},
+  o_painMild:{type:'o', tier:'t3', title:`Mild pain, eases with painkillers, vision normal`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Low-risk pain — review when convenient.`},
+  o_dryEye:{type:'o', tier:'t5', title:`Dry / gritty eye, no vision change`,
+    action:`Not an eye-casualty problem. Advise lubricating drops; see GP. If they have already tried treatment, GP can refer to clinic.`,
+    concern:`Dry eye is common and not an emergency.`},
+
+  // Headache
+  o_gca:{type:'o', tier:'t1', title:`Possible giant cell arteritis (with eye involvement)`,
+    action:`See in eye casualty NOW / phone the on-call eye team. Urgent bloods and steroids may be needed per the local pathway.`,
+    concern:`Can cause sudden permanent sight loss and is also a medical emergency — treat quickly.`},
+  o_headSevere:{type:'o', tier:'t1', title:`Severe headache (7–10) with eye symptoms`,
+    action:`See in eye casualty NOW / phone the on-call eye team.`,
+    concern:`Needs prompt assessment for a serious cause.`},
+  o_headVL24:{type:'o', tier:'t2', title:`Sudden vision loss, unknown cause (more than 6 hours, within 24 hours)`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Several possible causes — needs prompt assessment.`},
+  o_gcaNoVisual:{type:'o', tier:'t5', title:`Possible giant cell arteritis, NO vision symptoms`,
+    action:`Not an eye-casualty route — discuss with a medical doctor and arrange an urgent MEDICAL referral.`,
+    concern:`Still important and time-sensitive, but managed by the medical team when the eye is not involved.`},
+  o_headacheOnly:{type:'o', tier:'t5', title:`Headache only, no eye or vision symptoms`,
+    action:`Not an eye-casualty problem — direct to GP / medical services.`,
+    concern:`Headache without eye involvement is not an ophthalmic emergency.`,
+    note:`If it is a sudden "worst-ever" / thunderclap headache, or there is weakness, facial droop, speech problems, neck stiffness or confusion, treat as a medical emergency — call 999.`},
+
+  // Lids / facial / orbit
+  o_preseptal:{type:'o', tier:'t2', title:`Pre-septal cellulitis (lid infection, eye not involved)`,
+    action:`Eye casualty within 24 hours. (If the patient is a child, send to the Paediatric Emergency Department.)`,
+    concern:`Lid infection with fever, but the eye itself looks and moves normally.`},
+  o_swollenApyrexial:{type:'o', tier:'t2', title:`Swollen lid, no fever`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Moderate-to-severe lid swelling without fever — needs review.`},
+  o_swollenMild:{type:'o', tier:'t3', title:`Mild lid swelling, white eye, no fever`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Lower-risk lid swelling.`},
+  o_3rdNerve:{type:'o', tier:'t1', title:`Drooping lid with pupil change / double vision`,
+    action:`See in eye casualty NOW / phone the on-call eye team.`,
+    concern:`Possible third-nerve palsy — when the pupil is involved, an aneurysm must be ruled out urgently.`},
+  o_ptosisIsolated:{type:'o', tier:'t2', title:`Drooping lid only (no pupil change, no double vision)`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Isolated drooping lid — needs assessment.`},
+  o_proptosisVL:{type:'o', tier:'t1', title:`Bulging eye WITH vision loss`,
+    action:`See in eye casualty NOW / phone the on-call eye team.`,
+    concern:`Pressure on the eye / optic nerve — sight-threatening.`},
+  o_proptosisNoVL:{type:'o', tier:'t2', title:`Bulging eye, vision okay`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`New bulging eye still needs prompt assessment.`},
+  o_zosterEye:{type:'o', tier:'t2', title:`Shingles involving the eye`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Shingles affecting the eyeball or significant lid involvement can threaten the eye.`},
+  o_zosterSkin:{type:'o', tier:'t5', title:`Shingles — mild skin only, eye not involved`,
+    action:`Does not need to be seen in eye casualty — manage as shingles (GP / usual care).`,
+    concern:`Low risk to the eye when only the skin is affected.`},
+  o_dacryo:{type:'o', tier:'t2', title:`Acute tear-sac infection (dacryocystitis)`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Infected tear sac — needs treatment.`},
+  o_styeChalazion:{type:'o', tier:'t5', title:`Stye / lid cyst (chalazion)`,
+    action:`Not an eye-casualty problem — GP. If large or present over 3 months, GP can refer to the lid clinic.`,
+    concern:`Common lid lump, not an emergency.`},
+  o_trich:{type:'o', tier:'t3', title:`Lashes rubbing the eye (trichiasis)`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Lashes can irritate or scratch the surface.`},
+  o_entropion:{type:'o', tier:'t5', title:`Lid turned inward (entropion), no surface problem`,
+    action:`Not urgent — routine clinic referral (unless there is an eye-surface problem, then treat as urgent).`,
+    concern:`Usually a slowly progressive lid problem.`},
+  o_wateryEyeSx:{type:'o', tier:'t3', title:`Watery eye WITH other symptoms`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Watering with grittiness, redness, light sensitivity or pain suggests a surface cause.`},
+  o_wateryEyeNoSx:{type:'o', tier:'t5', title:`Watery eye only, no other symptoms`,
+    action:`Not an eye-casualty problem — GP can refer to the lacrimal (tear-duct) clinic.`,
+    concern:`Usually a blocked tear duct — not an emergency.`},
+  o_allergic:{type:'o', tier:'t5', title:`Allergic eye (sudden, itchy, puffy)`,
+    action:`Not an eye-casualty problem — cold compress, lubricating drops and an over-the-counter antihistamine.`,
+    concern:`Allergy — uncomfortable but not dangerous.`},
+
+  // Cornea / conjunctiva
+  o_keratitis:{type:'o', tier:'t1', title:`Possible corneal infection (microbial keratitis)`,
+    action:`See in eye casualty NOW / phone the on-call eye team.`,
+    concern:`Cloudy / white cornea with pain and redness — can scar vision; contact-lens wearers are higher risk.`,
+    steps:[`If a contact-lens wearer: stop lenses now and bring the lenses and case.`]},
+  o_hazy:{type:'o', tier:'t2', title:`Hazy cornea with redness`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Corneal inflammation — needs review.`},
+  o_limbus:{type:'o', tier:'t2', title:`Redness around the edge of the iris, normal vision`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`This pattern of redness can mean inner-eye inflammation.`},
+  o_fbSensation:{type:'o', tier:'t3', title:`Gritty "something in the eye" feeling`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Often a surface foreign body or minor abrasion.`},
+  o_mildPhoto:{type:'o', tier:'t3', title:`Mild redness with light sensitivity, vision normal`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Surface or mild inner-eye inflammation.`},
+  o_mildRedness:{type:'o', tier:'t3', title:`Mild redness, no real discomfort`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Low-risk red eye.`},
+  o_conjNonResolving:{type:'o', tier:'t3', title:`Conjunctivitis not settling after 2+ weeks`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Persistent conjunctivitis despite treatment needs a closer look.`},
+  o_bacterialConj:{type:'o', tier:'t5', title:`Likely bacterial conjunctivitis`,
+    action:`Not an eye-casualty emergency — give conjunctivitis advice and hygiene measures first.`,
+    concern:`Usually self-limiting; review only if it does not settle within about 2 weeks.`},
+  o_subconj:{type:'o', tier:'t5', title:`Blood-red patch on the white of the eye (subconjunctival haemorrhage)`,
+    action:`Not an eye-casualty problem — check blood pressure and discharge with a leaflet / GP.`,
+    concern:`Looks dramatic but is harmless and clears on its own.`},
+  o_keratoconus:{type:'o', tier:'t5', title:`Keratoconus / pterygium over the visual axis`,
+    action:`Not urgent — routine clinic referral.`,
+    concern:`Long-standing structural change — managed in clinic.`},
+
+  // Other
+  o_pupilVisual:{type:'o', tier:'t2', title:`New abnormal pupil with vision symptoms`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`A new pupil abnormality with vision symptoms needs prompt assessment.`},
+  o_pupilAsx:{type:'o', tier:'t3', title:`Unequal pupils, no other symptoms`,
+    action:`Within 3 days — discuss with the on-call team.`,
+    concern:`Often long-standing and harmless, but worth confirming.`},
+  o_discsSymptomatic:{type:'o', tier:'t2', title:`Swollen optic discs WITH symptoms`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Swollen discs plus new vision change, double vision, new headache or feeling unwell need prompt assessment.`},
+  o_discsAsx:{type:'o', tier:'t3', title:`Swollen optic discs, patient well`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Found by chance with no symptoms — still needs review.`},
+  o_cancer:{type:'o', tier:'t3', title:`Suspected eye / retinal cancer`,
+    action:`Eye casualty within 3 days.`,
+    concern:`Suspected ocular tumour — needs specialist assessment.`},
+
+  // IOP / glaucoma
+  o_iop40:{type:'o', tier:'t2', title:`Eye pressure 40 mmHg or higher`,
+    action:`Eye casualty within 24 hours — glaucoma service. (Not needed for a blind, non-painful eye.)`,
+    concern:`Very high pressure can damage the optic nerve.`},
+  o_iopAsx:{type:'o', tier:'t5', title:`High pressure but no symptoms`,
+    action:`Not an eye-casualty emergency — GP / glaucoma service (or glaucoma hub for incidental high pressure).`,
+    concern:`Ocular hypertension — managed in the glaucoma pathway.`},
+
+  // Paediatric
+  o_NAI:{type:'o', tier:'t1', title:`Suspected non-accidental injury`, paed:true,
+    action:`Follow your local safeguarding pathway AND send to the Paediatric Emergency Department.`,
+    concern:`Safeguarding takes priority — escalate immediately.`},
+  o_paedPreseptal:{type:'o', tier:'t2', title:`Child with a lid infection (eye not involved)`, paed:true,
+    action:`Send to the Paediatric Emergency Department.`,
+    concern:`Lid infection with fever, eye looks and moves normally.`},
+  o_paedOrbital:{type:'o', tier:'t1', title:`Child — possible spread behind the eye`, paed:true,
+    action:`Discuss with a doctor URGENTLY / Paediatric Emergency Department now.`,
+    concern:`Eye pushed forward, painful movements or reduced vision suggests orbital involvement — urgent.`},
+  o_neonatalConj:{type:'o', tier:'t2', title:`Newborn with a red / sticky / discharging eye`, paed:true,
+    action:`Discuss with a doctor (usually seen within 24 hours).`,
+    concern:`Conjunctivitis in a newborn can be a serious infection — do not treat as ordinary conjunctivitis.`},
+  o_squint:{type:'o', tier:'t2', title:`Child with a sudden squint or wobbly eyes`, paed:true,
+    action:`Discuss with a doctor (usually seen within 24 hours).`,
+    concern:`A sudden squint or new nystagmus needs assessment.`},
+  o_redReflex:{type:'o', tier:'t2', title:`Child with an absent red reflex / white pupil`, paed:true,
+    action:`Urgent referral to paediatric eye outpatients (GP urgent referral, or internal referral to the paediatric ophthalmology fellow).`,
+    concern:`A white pupil / absent red reflex can be a sign that must not be missed — refer urgently.`},
+  o_paedDisc:{type:'o', tier:'t3', title:`Child with a swollen disc but otherwise well`, paed:true,
+    action:`Within 3 days — discuss with a doctor.`,
+    concern:`Needs review, but the well child is lower-risk.`},
+  o_paedOther:{type:'o', tier:'t2', title:`Child with another eye problem`, paed:true,
+    action:`Discuss with a doctor to agree timing.`,
+    concern:`As a rule, children are seen the same day or within 24 hours unless a doctor advises otherwise.`},
+
+  // Post-op
+  o_endophthalmitis:{type:'o', tier:'t1', title:`Possible infection inside the eye (endophthalmitis)`,
+    action:`See in eye casualty NOW / phone the on-call eye team (cataract service).`,
+    concern:`Pain, redness, vision loss or a white fluid level after inside-the-eye surgery is sight-threatening.`},
+  o_postopDark:{type:'o', tier:'t1', title:`Vision dropped / darkened within 8 hours of surgery`,
+    action:`See in eye casualty NOW / phone the on-call eye team.`,
+    concern:`Early sudden vision loss after surgery needs urgent assessment.`},
+  o_postopReducedVision:{type:'o', tier:'t2', title:`Slightly reduced vision within 3 days of surgery`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Reduced vision without pain, redness or a fluid level — review needed.`},
+  o_postopRoutine:{type:'o', tier:'t5', title:`Routine post-op query`,
+    action:`Not an emergency — repeat drops via GP; for dryness use lubricants and contact the cataract service; post-op swelling (CMO) → cataract clinic triage.`,
+    concern:`Routine after-surgery issue.`},
+  o_postopPain:{type:'o', tier:'t1', title:`Moderate / severe pain after eye surgery`,
+    action:`See in eye casualty NOW / phone the on-call eye team.`,
+    concern:`Significant post-op pain needs prompt assessment.`},
+  o_postopBleed:{type:'o', tier:'t1', title:`Heavy bleeding after eye surgery`,
+    action:`See in eye casualty NOW / phone the on-call eye team.`,
+    concern:`Profuse bleeding needs urgent review.`},
+  o_postopVL:{type:'o', tier:'t1', title:`Sudden vision loss after eye surgery`,
+    action:`See in eye casualty NOW / phone the on-call eye team.`,
+    concern:`Sudden post-op vision loss is an emergency.`},
+  o_postopMild:{type:'o', tier:'t2', title:`Mild pain within 2 weeks of surgery`,
+    action:`Eye casualty within 24 hours.`,
+    concern:`Mild post-op pain — review to be safe.`},
+  o_postopExtRoutine:{type:'o', tier:'t5', title:`Routine post-op query (no vision change)`,
+    action:`Not an emergency — within 6 months of surgery, refer to clinic (directed to the surgeon); over 6 months, GP refers to clinic; for a new prescription, contact the consultant's secretary.`,
+    concern:`Routine after-surgery issue.`},
+
+  // Not sure
+  o_notsure:{type:'o', tier:'t5', title:`Not sure which category fits`,
+    action:`If you are unsure, it is always safe to discuss with a senior or the on-call eye team. You can also go back and pick the closest option.`,
+    concern:`When in doubt, escalate rather than guess.`},
+};
+
+/* ====================== ENGINE + RENDERING ====================== */
+const TIERS = {
+  t1:{label:'EMERGENCY — see now', sub:'Same session. Out of hours: phone the on-call eye team.'},
+  t2:{label:'Within 24 hours', sub:'Arrange to be seen in eye casualty within a day.'},
+  t3:{label:'Within 3 days', sub:'Out of hours may wait overnight / weekend at on-call discretion.'},
+  t4:{label:'Fast track / within a few days', sub:'Dedicated clinic pathway.'},
+  t5:{label:'Not an eye-casualty emergency', sub:'Redirect as shown below.'},
+};
+const START='redflags';
+let currentId=START;
+let steps=[]; // {id,label}
+
+const transcriptEl=document.getElementById('transcript');
+const backBtn=document.getElementById('backBtn');
+const restartBtn=document.getElementById('restartBtn');
+
+function el(tag,cls,html){const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function go(nextId,label){ steps.push({id:currentId,label}); currentId=nextId; render(); }
+function back(){ if(steps.length){ currentId=steps.pop().id; render(); } }
+function restart(){ steps=[]; currentId=START; render(); }
+
+function botBubble(q,help){
+  const row=el('div','row');
+  const b=el('div','bubble bot');
+  b.appendChild(el('div','q',esc(q)));
+  if(help) b.appendChild(el('div','qhelp',esc(help)));
+  row.appendChild(b); transcriptEl.appendChild(row);
+}
+function userBubble(text){
+  const row=el('div','row user');
+  const b=el('div','bubble user',esc(text));
+  row.appendChild(b); transcriptEl.appendChild(row);
+}
+function optionButton(opt,handler,kind){
+  const btn=el('button',(kind||'')+' opt');
+  btn.type='button';
+  btn.innerHTML=esc(opt.t)+(opt.help||opt.sub?`<span class="sub">${esc(opt.help||opt.sub)}</span>`:'');
+  btn.addEventListener('click',handler);
+  return btn;
+}
+
+function renderOutcome(node){
+  const card=el('div','outcome '+node.tier);
+  const t=TIERS[node.tier];
+  const bLabel=node.tierLabel||t.label;
+  const bSub=node.tierSub||t.sub;
+  const banner=el('div','banner');
+  banner.appendChild(el('div','tlabel',esc(bLabel)));
+  banner.appendChild(el('div','tsub',esc(bSub)));
+  card.appendChild(banner);
+
+  const body=el('div','o-body');
+  body.appendChild(el('div','o-title',esc(node.title)));
+
+  const aSec=el('div','sec');
+  aSec.appendChild(el('div','lab','What to do'));
+  aSec.appendChild(el('div','val',esc(node.action)));
+  body.appendChild(aSec);
+
+  if(node.concern){
+    const cSec=el('div','sec');
+    cSec.appendChild(el('div','lab','Possible concern — not a diagnosis'));
+    cSec.appendChild(el('div','val',esc(node.concern)));
+    body.appendChild(cSec);
+  }
+  if(node.steps&&node.steps.length){
+    const sSec=el('div','sec');
+    sSec.appendChild(el('div','lab','Do this now'));
+    const ul=el('ul','dolist');
+    node.steps.forEach(s=>ul.appendChild(el('li',null,esc(s))));
+    sSec.appendChild(ul); body.appendChild(sSec);
+  }
+  if(node.paed){
+    body.appendChild(el('div','paed-note','👶 <b>Every child must be discussed with a doctor.</b> If a child is very unwell or you suspect sepsis, send to the Paediatric Emergency Department straight away.'));
+  }
+  if(node.note){
+    body.appendChild(el('div','note','⚠️ '+esc(node.note)));
+  }
+  body.appendChild(el('div','safety','<b>Before you act:</b> if you are unsure, or the patient seems worse than described here, discuss with a senior or the on-call eye doctor now. This tool supports your judgement — it does not replace it.'));
+
+  const acts=el('div','o-actions');
+  const copyBtn=el('button','btn primary','Copy summary'); copyBtn.type='button';
+  const copied=el('div','copied','Summary copied to clipboard.');
+  copyBtn.addEventListener('click',()=>{ copySummary(node); copied.classList.add('show'); setTimeout(()=>copied.classList.remove('show'),2200); });
+  const againBtn=el('button','btn','Start over'); againBtn.type='button'; againBtn.addEventListener('click',restart);
+  const backB=el('button','btn ghost','← Back'); backB.type='button'; backB.addEventListener('click',back);
+  acts.appendChild(copyBtn); acts.appendChild(againBtn); acts.appendChild(backB);
+  body.appendChild(acts); body.appendChild(copied);
+
+  card.appendChild(body);
+  const row=el('div','row'); row.appendChild(card); transcriptEl.appendChild(row);
+}
+
+function render(){
+  transcriptEl.innerHTML='';
+  // intro
+  botBubble("Hi — I'll help you decide how urgently this patient needs to be seen. Answer the simple questions and I'll guide you. You can tap Back any time, or Start over.");
+  // history
+  steps.forEach(s=>{ const n=FLOW[s.id]; botBubble(n.q,n.help); userBubble(s.label); });
+  // current
+  const node=FLOW[currentId];
+  if(node.type==='o'){ renderOutcome(node); }
+  else if(node.type==='rf'){
+    botBubble(node.q);
+    const wrap=el('div','options');
+    wrap.appendChild(el('div','rf-lead','Safety check'));
+    node.items.forEach(it=>wrap.appendChild(optionButton(it,()=>go(it.out,it.t),'rf')));
+    wrap.appendChild(optionButton({t:node.noneLabel},()=>go(node.none,node.noneLabel),'none'));
+    const row=el('div','row'); row.style.flexDirection='column'; row.appendChild(wrap); transcriptEl.appendChild(row);
+  } else { // question
+    botBubble(node.q,node.help);
+    const wrap=el('div','options');
+    node.opts.forEach(opt=>wrap.appendChild(optionButton(opt,()=>go(opt.next,opt.t))));
+    const row=el('div','row'); row.style.flexDirection='column'; row.appendChild(wrap); transcriptEl.appendChild(row);
+  }
+  // footer state
+  backBtn.disabled=steps.length===0;
+  // scroll
+  requestAnimationFrame(()=>{ window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); });
+}
+
+function copySummary(node){
+  const t=TIERS[node.tier];
+  const bLabel=node.tierLabel||t.label;
+  const lines=[];
+  lines.push('EYE CASUALTY TRIAGE — SUMMARY');
+  lines.push('Generated: '+new Date().toLocaleString());
+  lines.push('');
+  lines.push('Answers given:');
+  steps.forEach(s=>{ const n=FLOW[s.id]; lines.push('• '+n.q.replace(/\s+/g,' ').trim()+' → '+s.label); });
+  lines.push('');
+  lines.push('OUTCOME: '+bLabel);
+  lines.push('Pattern: '+node.title);
+  lines.push('What to do: '+node.action);
+  if(node.concern) lines.push('Possible concern (not a diagnosis): '+node.concern);
+  if(node.steps&&node.steps.length){ lines.push('Do now:'); node.steps.forEach(s=>lines.push('  - '+s)); }
+  if(node.paed) lines.push('Note: every child must be discussed with a doctor.');
+  if(node.note) lines.push('Important: '+node.note);
+  lines.push('');
+  lines.push('Reminder: decision support only — discuss with senior / on-call if unsure or if the patient is worse than described. Out of hours the on-call eye doctor decides priority.');
+  const text=lines.join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).catch(()=>fallbackCopy(text)); }
+  else fallbackCopy(text);
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta);
+}
+
+backBtn.addEventListener('click',back);
+restartBtn.addEventListener('click',restart);
+
+// Urgency key modal
+const keyModal=document.getElementById('keyModal');
+document.getElementById('keyBtn').addEventListener('click',()=>keyModal.classList.add('show'));
+document.getElementById('keyClose').addEventListener('click',()=>keyModal.classList.remove('show'));
+keyModal.addEventListener('click',e=>{ if(e.target===keyModal) keyModal.classList.remove('show'); });
+
+render();
+</script>
+</body>
+</html>
