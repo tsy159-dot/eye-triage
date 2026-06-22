@@ -119,6 +119,35 @@
   .modal .btn{width:100%; margin-top:14px}
   .copied{font-size:12.5px; color:var(--brand); font-weight:600; margin-top:8px; display:none}
   .copied.show{display:block}
+  .ft-card{max-width:560px; margin:8px auto 0}
+  .ft-h{font-size:19px; font-weight:700; color:#14323a; margin:0 0 4px}
+  .ft-p{font-size:14px; color:#5b7178; line-height:1.55; margin:0 0 14px}
+  .ft-ta{width:100%; min-height:120px; padding:14px; font-size:16px; font-family:inherit; color:#14323a; border:1.5px solid #cdd9db; border-radius:12px; resize:vertical; outline:none; box-sizing:border-box; line-height:1.5}
+  .ft-ta:focus{border-color:#0f5f68}
+  .ft-err{color:#b3261e; font-size:13px; margin-top:8px; display:none}
+  .ft-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+  .ft-find{background:#0f5f68; color:#fff; border:0; border-radius:11px; padding:13px 18px; font-size:16px; font-weight:600; cursor:pointer; flex:1 1 200px}
+  .ft-find:hover{background:#0c4d54}
+  .ft-alt{background:#eaf1f2; color:#0c4d54; border:0; border-radius:11px; padding:13px 16px; font-size:15px; font-weight:600; cursor:pointer; flex:0 1 auto}
+  .ft-examples{margin-top:18px}
+  .ft-ex-lab{font-size:12px; color:#5b7178; margin-bottom:8px}
+  .ft-chips{display:flex; gap:8px; flex-wrap:wrap}
+  .ft-chip{background:#fff; border:1px solid #d7e1e3; color:#14323a; border-radius:999px; padding:8px 13px; font-size:13px; cursor:pointer}
+  .ft-chip:hover{border-color:#0f5f68; color:#0c4d54}
+  .ft-safety{margin-top:18px; background:#fdecea; border:1px solid #f6cfc9; color:#7a2018; border-radius:12px; padding:11px 13px; font-size:13px; line-height:1.5}
+  .ft-note{margin-top:14px; font-size:12px; color:#5b7178; text-align:center; line-height:1.55}
+  .home-card{max-width:520px; margin:26px auto 0}
+  .home-h{font-size:18px; font-weight:700; color:#14323a; margin:0 0 16px; text-align:center}
+  .home-btn{display:block; width:100%; text-align:left; border-radius:14px; padding:17px 18px; margin-bottom:14px; cursor:pointer; border:1.5px solid transparent; font-family:inherit}
+  .home-btn .home-bt{display:block; font-size:17px; font-weight:700}
+  .home-btn .home-bs{display:block; font-size:13px; font-weight:400; margin-top:4px}
+  .home-btn.primary{background:#0f5f68; color:#fff; border-color:#0f5f68}
+  .home-btn.primary:hover{background:#0c4d54}
+  .home-btn.primary .home-bs{color:#d7eaec}
+  .home-btn.ghost{background:#fff; color:#14323a; border-color:#cdd9db}
+  .home-btn.ghost:hover{border-color:#0f5f68}
+  .home-btn.ghost .home-bs{color:#5b7178}
+  .ft-back{background:none; border:0; color:#0f5f68; font-size:13px; font-weight:600; cursor:pointer; padding:0; margin:0 0 12px}
 </style>
 </head>
 <body>
@@ -132,6 +161,7 @@
       <div class="sub">Step-by-step guide for staff</div>
     </div>
     <div style="margin-left:auto; display:flex; gap:8px">
+      <button class="keybtn" id="ftBtn" type="button">✍️ Free text</button>
       <button class="keybtn" id="keyBtn" type="button">Urgency key</button>
     </div>
   </div>
@@ -143,12 +173,43 @@
 </div>
 
 <main>
-  <div id="guidedView">
+  <div id="homeView">
+    <div class="home-card">
+      <div class="home-h">How would you like to start?</div>
+      <button class="home-btn primary" id="homeGuided" type="button"><span class="home-bt">Use guided questions</span><span class="home-bs">Answer simple questions, step by step — recommended</span></button>
+      <button class="home-btn ghost" id="homeFree" type="button"><span class="home-bt">Describe the eye problem in your own words</span><span class="home-bs">Type freely and it finds the right questions for you</span></button>
+    </div>
+  </div>
+  <div id="ftView" style="display:none">
+    <div class="ft-card">
+      <button class="ft-back" id="ftBack" type="button">← Back to start</button>
+      <div class="ft-h">Describe the eye problem in your own words</div>
+      <div class="ft-p">Type what is going on — symptoms, how long, anything relevant. It works fully offline (nothing is sent anywhere) and takes you straight to the right questions. Keep it anonymous, e.g. “patient in their 50s”.</div>
+      <textarea id="ftText" class="ft-ta" placeholder="e.g. “sudden flashing lights and floaters in the right eye, very short-sighted”"></textarea>
+      <div class="ft-err" id="ftErr"></div>
+      <div class="ft-actions">
+        <button class="ft-find" id="ftFind" type="button">Find the right questions →</button>
+        <button class="ft-alt" id="ftGuided" type="button">Use guided questions instead</button>
+      </div>
+      <div class="ft-examples">
+        <div class="ft-ex-lab">Or tap an example:</div>
+        <div class="ft-chips">
+          <button class="ft-chip" type="button" data-q="double vision, came on suddenly">double vision</button>
+          <button class="ft-chip" type="button" data-q="flashes of light and new floaters, short sighted">flashes &amp; floaters</button>
+          <button class="ft-chip" type="button" data-q="red painful eye, wears contact lenses">red painful eye + contacts</button>
+          <button class="ft-chip" type="button" data-q="chemical splashed into the eye">chemical splash</button>
+        </div>
+      </div>
+      <div class="ft-safety">⚠️ <b>Obvious emergencies:</b> a chemical splash, a penetrating injury, or sudden total loss of vision — treat as an emergency and get the patient seen now.</div>
+      <div class="ft-note">This recognises common words and phrases on the device. If it cannot tell, it shows the symptom list so you can choose.</div>
+    </div>
+  </div>
+  <div id="guidedView" style="display:none">
     <div class="transcript" id="transcript" aria-live="polite"></div>
   </div>
 </main>
 
-<footer id="guidedFooter">
+<footer id="guidedFooter" style="display:none">
   <div class="ctrls">
     <button class="btn ghost" id="backBtn" type="button">← Back</button>
     <button class="btn" id="restartBtn" type="button">Start over</button>
@@ -176,6 +237,8 @@
    Plain language is used throughout for non-specialist staff.            */
 
 const FLOW = {
+  __ft__:{q:`You described:`, help:`Based on this, I have gone to the most relevant point below. Tap Back to change your description, or use the symptom list.`},
+  __ftq__:{q:`You described:`, help:`I could not be sure from that — please choose the closest option below.`},
   /* ---------- 1. RED-FLAG SAFETY CHECK ---------- */
   redflags:{type:'rf',
     q:`Let's start with a quick safety check. Tap anything that is happening to the patient right now. If none apply, tap "None of these".`,
@@ -230,6 +293,7 @@ const FLOW = {
   vision:{type:'q', q:`Which best describes the vision problem?`, opts:[
     {t:`Came on SUDDENLY in the last 12 hours`, sub:`Loss or change of vision`, next:'vision_sudden'},
     {t:`Flashes of light and / or new floaters`, next:'vision_ff'},
+    {t:`Shimmering, zig-zag or coloured patterns that came and went`, sub:`e.g. an "aura" lasting minutes, then cleared`, next:'vision_aura'},
     {t:`Gradual change over days to weeks`, next:'vision_gradual'},
     {t:`Distortion (straight lines look wavy / bent) or a missing patch`, next:'o_distortion'},
     {t:`Double vision`, next:'diplopia_age'},
@@ -258,6 +322,27 @@ const FLOW = {
       {t:`Central vision is already lost or very poor`, next:'o_rdMaculaOff'},
       {t:`Not sure`, sub:`We'll treat it as the more urgent option.`, next:'o_rdMaculaOn'},
     ]},
+  vision_aura:{type:'q', q:`Has the shimmering / zig-zag / coloured disturbance now FULLY cleared (within about an hour), with vision back to normal and NO weakness, numbness or speech problems?`,
+    help:`Migraine "aura" builds up over a few minutes, then clears completely.`, opts:[
+    {t:`Yes — fully cleared within about an hour, nothing else`, next:'vision_aura_risk'},
+    {t:`No — still there, OR there is / was weakness, numbness, slurred speech, or lasting vision loss`, next:'o_auraNeuro'},
+  ]},
+  vision_aura_risk:{type:'q', q:`Is the patient UNDER about 50 with NO stroke risk factors (high blood pressure, diabetes, smoking, irregular heartbeat, previous stroke / TIA), and has had similar episodes before?`,
+    help:`These features make migraine far more likely than a mini-stroke (TIA).`, opts:[
+    {t:`Yes — young, no risk factors, similar episodes before`, next:'o_migraineAura'},
+    {t:`No — 50 or older, OR has risk factors, OR this is the FIRST such episode`, next:'o_auraTIA'},
+  ]},
+  o_migraineAura:{type:'o', tier:'t5', title:`Likely migraine aura (visual migraine)`,
+    action:`Not an eye-casualty emergency. If episodes are typical and recurring, manage routinely — GP review. Advise the patient to seek urgent care if an episode is different, lasts much longer, affects only one eye like a curtain, or comes with weakness / numbness / speech problems.`,
+    concern:`A shimmering / zig-zag / coloured aura that builds up and fully clears within an hour, in a younger person with no vascular risk factors, is usually migraine.`,
+    note:`If the patient is older, has vascular risk factors, or this is the FIRST episode, treat as possible TIA instead — arrange urgent medical assessment.`},
+  o_auraTIA:{type:'o', tier:'t2', title:`Transient visual disturbance — possible TIA / first aura`,
+    action:`Treat as possible TIA: arrange urgent medical assessment (same day) and refer via the local TIA / stroke pathway. This is a medical concern, not just an eye one.`,
+    concern:`In older patients, those with vascular risk factors, or a first-ever episode, a transient visual disturbance can be a mini-stroke (TIA / amaurosis fugax) rather than migraine.`,
+    note:`If any weakness, numbness, facial droop or speech difficulty is present now, treat as a STROKE — call 999.`},
+  o_auraNeuro:{type:'o', tier:'t1', title:`Visual disturbance with ongoing or neurological symptoms`,
+    action:`If there is weakness, numbness, facial droop or speech difficulty NOW, treat as a STROKE — call 999. Otherwise arrange urgent same-day medical / stroke assessment.`,
+    concern:`Symptoms that have not fully cleared, or any weakness / speech problem, raise concern for a stroke or TIA rather than migraine.`},
 
   /* ---------- PAIN ---------- */
   pain:{type:'q', q:`How bad is the eye pain?`, opts:[
@@ -760,8 +845,13 @@ function el(tag,cls,html){const e=document.createElement(tag); if(cls)e.classNam
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function go(nextId,label){ steps.push({id:currentId,label}); currentId=nextId; render(); }
-function back(){ if(steps.length){ currentId=steps.pop().id; render(); } }
-function restart(){ steps=[]; currentId=START; render(); }
+function back(){
+  if(!steps.length) return;
+  const prev=steps.pop();
+  if(prev.id==='__ft__'||prev.id==='__ftq__'){ steps=[]; showFT(); return; }
+  currentId=prev.id; render();
+}
+function restart(){ steps=[]; currentId=START; showHome(); }
 
 function botBubble(q,help){
   const row=el('div','row');
@@ -900,7 +990,83 @@ document.getElementById('keyBtn').addEventListener('click',()=>keyModal.classLis
 document.getElementById('keyClose').addEventListener('click',()=>keyModal.classList.remove('show'));
 keyModal.addEventListener('click',e=>{ if(e.target===keyModal) keyModal.classList.remove('show'); });
 
-render();
+/* ====================== OFFLINE FREE-TEXT MODE (no AI) ====================== */
+const homeView=document.getElementById('homeView');
+const ftView=document.getElementById('ftView');
+const guidedView=document.getElementById('guidedView');
+const guidedFooter=document.getElementById('guidedFooter');
+function showHome(){ homeView.style.display=''; ftView.style.display='none'; guidedView.style.display='none'; guidedFooter.style.display='none'; window.scrollTo({top:0}); }
+function showFT(){ homeView.style.display='none'; ftView.style.display=''; guidedView.style.display='none'; guidedFooter.style.display='none'; window.scrollTo({top:0}); const t=document.getElementById('ftText'); if(t) t.focus(); }
+function showGuided(){ homeView.style.display='none'; ftView.style.display='none'; guidedView.style.display=''; guidedFooter.style.display=''; }
+function startGuided(){ steps=[]; currentId=START; showGuided(); render(); }
+
+function matchTarget(raw){
+  const norm=' '+raw.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()+' ';
+  const has=function(){ for(var i=0;i<arguments.length;i++){ if(norm.indexOf(' '+arguments[i]+' ')!==-1) return true; } return false; };
+
+  /* ----- RED FLAGS (highest priority) ----- */
+  if(has('chemical','chemicals','bleach','acid','alkali','alkaline','ammonia','caustic','cleaner','cleaning product','detergent','chlorine','lime','cement','plaster','drain cleaner','oven cleaner','solvent')) return 'o_chem';
+  if(has('penetrating','penetrated','pierced','pierce','stabbed','impaled','knife','open globe','cut the eye','cut his eye','cut her eye','laceration of the eye','sharp object went')) return 'o_penetrate';
+  if(has('grinding','grinder','hammering','strimming','strimmer','flying metal','metal flew','high speed','high-speed','angle grinder')) return 'o_orbitalFB';
+  if(has('blind','blindness','went black','gone black','cant see','can t see','cannot see anything','no vision','lost all vision','lost all sight','complete loss','completely lost','total loss of vision','totally lost','lost my sight','lost his sight','lost her sight','vision completely gone')) return 'o_suddenLoss';
+  if(has('double vision','diplopia','seeing double','sees double','two images','two of everything','seeing two','sees two')) return 'diplopia_age';
+  if(has('halo','haloes','halos','rainbows around lights','angle closure','glaucoma attack')) return 'o_aac';
+  if(has('vomit','vomiting','nausea','feeling sick','being sick','throwing up') && has('red eye','blurred','blurry','severe pain','very painful','painful red eye','eye pain','sore eye')) return 'o_aac';
+  if(has('orbital cellulitis')) return 'o_orbital';
+  if(has('bulging','proptosis','pushed forward','popping out','protruding','sticking out') && has('fever','feverish','unwell','hot','temperature','poorly','sick','swollen lid')) return 'o_orbital';
+  var child=has('child','baby','toddler','infant','kid','son','daughter','newborn','year old','years old','months old','month old','boy','girl');
+  if(child && has('unwell','drowsy','floppy','fever','feverish','sick','lethargic','not feeding','sleepy','temperature','poorly')) return 'o_paedSick';
+
+  /* ----- SPECIFIC NON-EMERGENCY ----- */
+  if(has('aura','visual aura','migraine aura','zigzag','zig zag','zig-zag','shimmering','shimmer','shimmery','fortification','kaleidoscope','scintillating','jagged lines','seeing colours','seeing colors','colours in my vision','colors in my vision','colour in my vision','color in my vision','coloured patterns','colored patterns','coloured lights','colored lights','flickering colours','flickering colors')) return 'vision_aura';
+  if(has('flashes','flashing','flashing lights','floaters','floater','cobwebs','curtain','shadow over','veil over','spots in my vision','new spots','black dots')) return 'vision_ff';
+  if(has('retinal detachment','detached retina','retina detached','detachment of the retina')) return 'vision_rd';
+  if(has('wavy','distorted','distortion','bent lines','straight lines look','crooked lines','missing patch','blank patch','metamorphopsia','lines look bent')) return 'o_distortion';
+  if(has('wet amd','macular degeneration','vein occlusion','rvo','crvo','brvo')) return 'o_wetAMD';
+  if(has('contact lens','contact lenses','contacts','lens wearer','wears lenses','soft lenses','wears contacts') && has('red','painful','pain','sore','hurts','hurt')) return 'o_clRed';
+  if(has('blood red patch','red patch on the white','blood in the white','bright red patch','subconjunctival','blood spot on','blood patch','red blood patch','patch of blood','blood on the white','burst blood vessel','broken blood vessel')) return 'o_subconj';
+  if(has('shingles','zoster','blistering rash','rash on the forehead','rash on forehead','blisters on one side','rash one side of forehead')) return 'lids_zoster';
+  if(has('foreign body','something in my eye','something in the eye','something in his eye','something in her eye','scratch','scratched','grit','speck','splinter','sawdust','eyelash in','dust in my eye','abrasion','feels like sand')) return 'trauma_fb';
+  if(has('punch','punched','hit in the eye','hit the eye','football','squash ball','ball hit','elbow','headbutt','fell on','black eye','blunt injury','got hit in')) return 'trauma_blunt';
+  if(has('conjunctivitis','pink eye','discharge','sticky eye','sticky','pus','weepy','gunky','yellow discharge','green discharge','crusty')) return 'cornea_conj';
+
+  /* ----- GENERAL BRANCHES ----- */
+  if(has('eyelid','eye lid','lid','stye','sty','chalazion','lump','cyst','droopy','drooping','ptosis','swollen lid','puffy lid','watery eye','watering','rash')) return 'lids';
+  if(has('headache','migraine','head ache','temple','temples','jaw ache','jaw claudication','scalp tender','giant cell','temporal')) return 'headache';
+  if(has('glaucoma','eye pressure','pressure in my eye','pressure in the eye','high pressure','iop','ocular hypertension')) return 'iop';
+  if(has('after surgery','post op','post-op','postop','cataract','trabeculectomy','vitrectomy','injection in the eye','injection into the eye','operation','had surgery','eye surgery','lens implant','after my op')) return 'postop';
+  if(child) return 'paed';
+  if(has('injury','injured','hurt my eye','trauma','accident','got hit','banged','knocked')) return 'trauma';
+  if((has('sudden','suddenly','all of a sudden')) && has('vision','sight','blurred','blurry','see','seeing','lost')) return 'vision_sudden';
+  if(has('gradual','gradually','over weeks','over months','getting worse','slowly worse','blurry for weeks','vision worse','worse over time')) return 'vision_gradual';
+  if(has('red eye','red eyes','eye is red','eyes are red','redness','bloodshot','gritty','sore eye','irritated','watery','itchy','burning')) return 'cornea';
+  if(has('pain','painful','hurts','hurt','sore','aching','ache','photophobia','light sensitive','sensitive to light')) return 'pain';
+  if(has('vision','sight','blurred','blurry','see','seeing','focus')) return 'vision';
+
+  return null;
+}
+
+function doFind(){
+  const raw=document.getElementById('ftText').value.trim();
+  const err=document.getElementById('ftErr');
+  if(!raw){ if(err){ err.textContent='Please type a short description first.'; err.style.display='block'; } return; }
+  if(err) err.style.display='none';
+  const m=matchTarget(raw);
+  if(m){ steps=[{id:'__ft__',label:raw}]; currentId=m; }
+  else { steps=[{id:'__ftq__',label:raw}]; currentId='chief'; }
+  showGuided(); render();
+}
+
+document.getElementById('ftFind').addEventListener('click',doFind);
+document.getElementById('ftText').addEventListener('keydown',function(e){ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); doFind(); } });
+document.getElementById('ftGuided').addEventListener('click',startGuided);
+document.getElementById('ftBack').addEventListener('click',showHome);
+document.getElementById('homeGuided').addEventListener('click',startGuided);
+document.getElementById('homeFree').addEventListener('click',showFT);
+document.getElementById('ftBtn').addEventListener('click',showFT);
+Array.prototype.forEach.call(document.querySelectorAll('.ft-chip'),function(c){ c.addEventListener('click',function(){ document.getElementById('ftText').value=c.getAttribute('data-q'); doFind(); }); });
+
+showHome();
 </script>
 </body>
 </html>
