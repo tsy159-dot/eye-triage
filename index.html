@@ -148,6 +148,36 @@
   .home-btn.ghost:hover{border-color:#0f5f68}
   .home-btn.ghost .home-bs{color:#5b7178}
   .ft-back{background:none; border:0; color:#0f5f68; font-size:13px; font-weight:600; cursor:pointer; padding:0; margin:0 0 12px}
+  .ai-bar{display:flex; gap:8px; margin-bottom:10px}
+  .ai-bar .btn{flex:0 0 auto; padding:8px 12px; font-size:13px}
+  .ai-privacy{background:#fff7e6; border:1px solid #f0dca6; border-radius:11px; padding:9px 12px; font-size:12.5px; color:#5a4600; margin-bottom:10px}
+  .ai-privacy b{color:#3a2c00}
+  .ai-input{display:flex; gap:8px; align-items:flex-end; margin-top:12px; position:sticky; bottom:0; background:linear-gradient(180deg,rgba(234,238,240,0),var(--bg) 30%); padding-bottom:8px}
+  .ai-input textarea{flex:1 1 auto; resize:none; border:1.5px solid #cfdade; border-radius:13px; padding:11px 13px; font:inherit; font-size:15.5px; max-height:140px; background:#fff; color:var(--ink)}
+  .ai-input textarea:focus-visible{outline:3px solid #7fb7bd; outline-offset:1px; border-color:var(--brand)}
+  .ai-input .btn{flex:0 0 auto}
+  .ai-disc{font-size:12px; color:var(--ink2); margin-top:6px; text-align:center}
+  .typing{display:inline-flex; gap:4px; padding:2px 0}
+  .typing span{width:7px;height:7px;border-radius:50%;background:#9fb0b6;animation:blink 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+  .ai-outcome{border-radius:14px; overflow:hidden; box-shadow:var(--shadow); max-width:90%}
+  .ai-outcome .banner{padding:11px 14px}
+  .ai-outcome .ab{padding:12px 14px; background:#fff; border:1px solid var(--line); border-top:none; white-space:pre-wrap; font-size:14.5px; line-height:1.5}
+  .quick{display:flex; flex-wrap:wrap; gap:7px; margin-top:10px}
+  .quick button{background:#fff; border:1.5px solid #cfdade; border-radius:999px; padding:8px 13px; font-size:14px; font-weight:550; cursor:pointer; color:var(--ink)}
+  .quick button:hover{border-color:var(--brand); background:#f4fafa}
+  .home-ai-row{display:flex; justify-content:flex-end; margin-top:44px}
+  .home-ai{background:none; border:0; color:#54636e; font-size:12.5px; cursor:pointer; padding:6px 4px; text-decoration:underline; text-underline-offset:2px}
+  .home-ai:hover{color:#0f5f68}
+  .ai-intro-card{max-width:560px; margin:14px auto 0}
+  .aii-h{font-size:19px; font-weight:700; color:var(--ink); margin:4px 0 8px}
+  .aii-p{font-size:14px; color:var(--ink2); line-height:1.55; margin:0 0 14px}
+  .aii-box{border-radius:12px; padding:12px 14px; font-size:13.5px; line-height:1.55; margin-bottom:12px}
+  .aii-app{background:#eef5f6; border:1px solid #cfe0e2; color:var(--ink)}
+  .aii-warn{background:#fdecea; border:1px solid #f6cfc9; color:#7a2018}
+  .aii-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:4px}
+  .aii-note{font-size:12px; color:var(--ink2); line-height:1.55; margin-top:14px; text-align:center}
 </style>
 </head>
 <body>
@@ -178,6 +208,7 @@
       <div class="home-h">How would you like to start?</div>
       <button class="home-btn primary" id="homeGuided" type="button"><span class="home-bt">Use guided questions</span><span class="home-bs">Answer simple questions, step by step — recommended</span></button>
       <button class="home-btn ghost" id="homeFree" type="button"><span class="home-bt">Describe the eye problem in your own words</span><span class="home-bs">Type freely and it finds the right questions for you</span></button>
+      <div class="home-ai-row"><button class="home-ai" id="homeAI" type="button">🤖 AI-assisted free question (Claude app)</button></div>
     </div>
   </div>
   <div id="ftView" style="display:none">
@@ -206,6 +237,33 @@
   </div>
   <div id="guidedView" style="display:none">
     <div class="transcript" id="transcript" aria-live="polite"></div>
+  </div>
+  <div id="aiIntroView" style="display:none">
+    <div class="ai-intro-card">
+      <button class="ft-back" id="aiIntroBack" type="button">← Back to start</button>
+      <div class="aii-h">🤖 AI-assisted free question</div>
+      <div class="aii-p">Describe the problem freely and an AI assistant asks follow-up questions, then suggests how urgently the patient should be seen.</div>
+      <div class="aii-box aii-app"><b>Needs the Claude app.</b> This mode only works when the tool is opened inside the Claude app (it uses Claude to read your text). If you do not have it, download the Claude app and open this tool there. Otherwise, please use the guided questions or the offline “describe in your own words” option.</div>
+      <div class="aii-box aii-warn">⚠️ <b>Never enter patient personal information.</b> Do NOT type names, dates of birth, addresses, hospital / NHS numbers, phone numbers, or anything that could identify a specific person — the text is sent to an AI service. Describe the patient only in anonymous terms, e.g. “patient in their 50s”.</div>
+      <div class="aii-actions">
+        <button class="ft-find" id="aiIntroContinue" type="button">I understand — continue</button>
+        <button class="ft-alt" id="aiIntroGuided" type="button">Use guided questions instead</button>
+      </div>
+      <div class="aii-note">Decision support for trained staff; it does not give a diagnosis. Your clinical judgement and senior / on-call advice always take priority.</div>
+    </div>
+  </div>
+  <div id="aiView" style="display:none">
+    <div class="ai-bar">
+      <button class="btn ghost" id="aiBackBtn" type="button">← Back to start</button>
+      <button class="btn ghost" id="aiClearBtn" type="button">Clear chat</button>
+    </div>
+    <div class="ai-privacy">🔒 <b>Anonymous information only.</b> No names, dates of birth, hospital numbers or other identifying details — describe the patient like “patient in their 50s”.</div>
+    <div class="transcript" id="aiMsgs" aria-live="polite"></div>
+    <div class="ai-input">
+      <textarea id="aiText" rows="1" placeholder="Describe anonymously… e.g. 'patient in their 50s, red painful eye, wears contact lenses'"></textarea>
+      <button class="btn primary" id="aiSend" type="button">Send</button>
+    </div>
+    <div class="ai-disc">Runs inside the Claude app (needs internet). Supports your judgement; not a diagnosis.</div>
   </div>
 </main>
 
@@ -995,10 +1053,13 @@ const homeView=document.getElementById('homeView');
 const ftView=document.getElementById('ftView');
 const guidedView=document.getElementById('guidedView');
 const guidedFooter=document.getElementById('guidedFooter');
-function showHome(){ homeView.style.display=''; ftView.style.display='none'; guidedView.style.display='none'; guidedFooter.style.display='none'; window.scrollTo({top:0}); }
-function showFT(){ homeView.style.display='none'; ftView.style.display=''; guidedView.style.display='none'; guidedFooter.style.display='none'; window.scrollTo({top:0}); const t=document.getElementById('ftText'); if(t) t.focus(); }
-function showGuided(){ homeView.style.display='none'; ftView.style.display='none'; guidedView.style.display=''; guidedFooter.style.display=''; }
+function hideAll(){ homeView.style.display='none'; ftView.style.display='none'; guidedView.style.display='none'; guidedFooter.style.display='none'; aiIntroView.style.display='none'; aiView.style.display='none'; }
+function showHome(){ hideAll(); homeView.style.display=''; window.scrollTo({top:0}); }
+function showFT(){ hideAll(); ftView.style.display=''; window.scrollTo({top:0}); const t=document.getElementById('ftText'); if(t) t.focus(); }
+function showGuided(){ hideAll(); guidedView.style.display=''; guidedFooter.style.display=''; }
 function startGuided(){ steps=[]; currentId=START; showGuided(); render(); }
+function showAIIntro(){ hideAll(); aiIntroView.style.display=''; window.scrollTo({top:0}); }
+function showAI(){ hideAll(); aiView.style.display=''; if(!aiStarted){ aiStarted=true; aiGreeting(); } setTimeout(function(){ aiText.focus(); },60); }
 
 function matchTarget(raw){
   const norm=' '+raw.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()+' ';
@@ -1065,6 +1126,134 @@ document.getElementById('homeGuided').addEventListener('click',startGuided);
 document.getElementById('homeFree').addEventListener('click',showFT);
 document.getElementById('ftBtn').addEventListener('click',showFT);
 Array.prototype.forEach.call(document.querySelectorAll('.ft-chip'),function(c){ c.addEventListener('click',function(){ document.getElementById('ftText').value=c.getAttribute('data-q'); doFind(); }); });
+
+/* ====================== AI-ASSISTED MODE (Claude app) ====================== */
+const SYSTEM_AI = `You are an eye casualty triage assistant used by nurses who may have little or no ophthalmology knowledge, in a UK hospital eye emergency department. Follow the local triage standard below EXACTLY.
+
+Your job: from what the nurse types, decide how urgently the patient needs to be seen, asking ONE simple plain-language question at a time to fill gaps, then give a clear recommendation.
+
+How to behave:
+- Use plain, everyday language. Explain any medical word in brackets.
+- Ask only ONE question per message, keep it short. Where useful, offer 2-4 tap options.
+- Never give a definitive diagnosis - say "possible".
+- If an emergency/red-flag feature is present, go straight to the emergency recommendation.
+- When unsure between two urgencies, choose the MORE urgent one.
+- Every child (under 16) must be discussed with a doctor; a very unwell / septic child goes to the Paediatric Emergency Department now.
+- Do not invent local phone numbers; refer to "eye casualty", "the on-call eye team", "Paediatric ED", etc.
+
+PATIENT PRIVACY (important):
+- This tool is for ANONYMOUS information only. Never ask for, and you do not need, any identifying details: no name, date of birth, address, hospital/NHS number, phone number, exact appointment time, or anything that could identify a specific person.
+- If the user includes identifying details, do NOT repeat them back and do NOT use them. Quietly ignore them and gently remind the user once: "Please keep this anonymous (e.g. 'patient in their 50s') and avoid names or other identifying details." Then carry on using only the clinical facts.
+- Only ask for clinically relevant, non-identifying facts (symptoms, how long, age band, contact-lens use, recent surgery type, whether a child, etc.).
+
+TIERS:
+- t1 EMERGENCY (see now / same session; out of hours phone the on-call eye team)
+- t2 within 24 hours
+- t3 within 3 days
+- t4 fast track / within a few days
+- t5 not for eye casualty (redirect: optician / pharmacy / GP / other)
+
+RED FLAGS -> t1 now: chemical splash (irrigate now, even by phone before travel); penetrating/severe injury or globe rupture (do not press the eye); sudden COMPLETE vision loss under 6 hours; severe pain 7-10 with eye symptoms; acute angle closure (red eye + blurred vision + fixed mid-dilated pupil + cloudy cornea + nausea/vomiting); GCA with visual symptoms (headache/scalp tenderness/jaw ache on chewing + blurred/double/lost vision or brief blackouts); 3rd-nerve palsy (sudden droopy lid + unequal pupil +/- double vision); acute proptosis (bulging eye) with vision loss; orbital cellulitis (unwell + fever + bulging eye + painful eye movements); infective keratitis / cloudy painful red cornea; after any eye surgery with pain/redness/vision loss, a white fluid level (hypopyon), sudden vision loss/darkening, or heavy bleeding; child very unwell/septic -> Paediatric ED.
+
+SPECIAL RULE - new sudden DOUBLE VISION: always ask the patient's age. UNDER 50 -> t4 fast track / within a few days AND discuss with the on-call eye doctor. 50 OR OLDER -> ask (a) whether it goes away when one eye is covered and (b) whether there are systemic symptoms (feeling run down/tired, headache, scalp/temple tenderness, jaw ache when chewing). If systemic symptoms are present (monocular OR binocular) -> t1 EMERGENCY (possible giant cell arteritis). If NO systemic symptoms: binocular (goes away when one eye is covered) -> t2, to be seen the SAME DAY; monocular (stays double with one eye covered) -> t5 not an emergency, likely a lens/focusing cause (optician/routine clinic). In ALL cases, if there is also facial droop, arm weakness or slurred speech -> treat as STROKE, call 999.
+
+SPECIAL RULE - transient VISUAL AURA / colours: a younger patient (under ~50, no vascular risk factors) with shimmering / zig-zag / coloured visual aura that builds up and FULLY clears within about an hour, with no other symptoms and similar past episodes, is likely MIGRAINE aura -> t5, not an emergency, manage routinely (GP). If the patient is 50+, has vascular risk factors, or it is the FIRST such episode -> possible TIA -> t2, urgent medical / TIA pathway. If symptoms have not fully cleared, or there is any weakness / numbness / speech problem -> t1, treat as stroke (call 999).
+
+CATEGORY RULES:
+Trauma: eyelid cut t2; blunt injury with vision loss t2; blunt injury with blood pooled over the iris (hyphaema) t2; possible high-speed metal / deeper foreign body t2; blunt injury no vision loss t3; surface foreign body or scratch t3.
+Vision: sudden vision change under 12h still present t2; sudden vision loss that fully resolved (possible mini-stroke/TIA) t2 (other stroke signs -> 999); flashes/floaters WITH vision loss or a curtain/shadow t2; new flashes/floaters WITH risk factors (short sight, previous tear/detachment, family history) t2; new flashes/floaters with NO risk factors t3; gradual change under 4 weeks t3; gradual change over 4 weeks t5 (clinic via doctor); new distortion/wavy lines or a missing patch (possible macular/AMD) t4 (macula clinic/imaging); diagnosed retinal detachment with central vision still present (macula-on) t2 via vitreo-retinal fellow; diagnosed retinal detachment with central vision already lost (macula-off) t3 via vitreo-retinal fellow; new wet AMD or vein occlusion referred by optician t4.
+Pain (0-10): severe 7-10 with eye symptoms t1; moderate 4-6 t2; pain waking them at night t2; contact-lens wearer + red eye t2 (stop lenses, bring the case); mild with relief and no vision change t3; light sensitivity with normal vision t3; dry/gritty with no vision change t5 (GP).
+Headache: GCA with visual symptoms t1; severe headache 7-10 with eye symptoms t1; acute angle closure t1; sudden vision loss unknown cause more than 6h but within 24h t2; possible GCA WITHOUT visual symptoms t5 (urgent MEDICAL referral); headache only with no eye symptoms t5 (GP/medical; a sudden worst-ever/thunderclap headache or weakness/speech/neck-stiffness -> 999).
+Lids/orbit: orbital cellulitis t1; bulging eye with vision loss t1; 3rd-nerve palsy t1; pre-septal cellulitis (fever + swollen lid, eye normal) t2 (child -> Paediatric ED); swollen lid no fever, moderate-severe t2; bulging eye no vision loss t2; shingles involving the eye or significant lid t2; tear-sac infection (dacryocystitis) t2; mild lid swelling, white eye t3; watery eye WITH other symptoms t3; lashes rubbing (trichiasis) t3; drooping lid only (no pupil change, no double vision) t2; mild-skin shingles only t5; watery eye only t5 (GP/lacrimal); stye/chalazion t5 (GP); lid turned in (entropion) t5; allergic itchy puffy lids t5.
+Cornea/conjunctiva: infective keratitis / cloudy painful red cornea t1; contact-lens red eye t2; hazy cornea + redness t2; redness around the edge of the iris (limbus), normal vision t2; gritty foreign-body feeling t3; mild redness +/- light sensitivity, normal vision t3; conjunctivitis not settling after 2 weeks t3; yellow/green discharge bacterial conjunctivitis t5 (advice first); blood-red patch (subconjunctival haemorrhage), no vision change t5 (check BP / GP); keratoconus or pterygium over the visual axis t5.
+Other: unequal pupils WITH vision symptoms t2; swollen optic discs WITH symptoms t2; suspected eye/retinal cancer t3; swollen discs with no symptoms t3; unequal pupils with no symptoms t3 (discuss with on-call).
+IOP/glaucoma: acute angle closure t1; eye pressure 40 or higher t2 (glaucoma service); high pressure no symptoms / incidental t5.
+Paediatric (ALL children -> discuss with a doctor): very unwell/septic -> Paediatric ED now (t1); suspected non-accidental injury -> safeguarding pathway + Paediatric ED (t1); pre-septal cellulitis -> Paediatric ED (t2); suspected spread behind the eye -> discuss urgently / Paediatric ED (t1); newborn with red/sticky eye t2 (discuss; can be a serious infection); sudden squint or wobbly eyes t2 (discuss); white pupil / absent red reflex -> urgent paediatric eye outpatients (t2, must not miss); swollen disc but well child t3 (discuss).
+Post-op: inside-the-eye surgery (cataract/glaucoma/injection) with pain/redness/vision loss, a white fluid level, or vision darkening within 8h -> t1 (possible endophthalmitis); slightly reduced vision within 3 days post-op, no pain/redness t2; other eye surgery with moderate/severe pain, heavy bleeding, or sudden vision loss -> t1; mild pain within 2 weeks t2; routine post-op queries (repeat drops, dryness, known swelling) t5.
+
+OUTPUT FORMAT:
+- If you still need information, reply with ONE short question. You MAY add tap options on the LAST line in this exact format: [[OPTIONS: option one | option two | option three]]
+- When you have enough to decide, give the FINAL recommendation. Begin the message with the tier tag alone, for example [[TIER:t1]] then:
+  Line 1: a short plain-language title (the possible concern - not a diagnosis).
+  Then "What to do:" the action and where to send them.
+  Then "Possible concern (not a diagnosis):" one sentence.
+  Then "Safety-net:" discuss with a senior / on-call if unsure or if the patient is worse than described; out of hours the on-call eye doctor decides priority.
+Keep every reply under about 150 words.`;
+
+const aiIntroView=document.getElementById('aiIntroView');
+const aiView=document.getElementById('aiView');
+const aiMsgs=document.getElementById('aiMsgs');
+const aiText=document.getElementById('aiText');
+const aiSend=document.getElementById('aiSend');
+let aiHistory=[]; let aiBusy=false; let aiStarted=false;
+
+function aiScroll(){ requestAnimationFrame(()=>{ window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); }); }
+function aiGreeting(){
+  const row=el('div','row'); const b=el('div','bubble bot');
+  b.innerHTML=esc("Tell me what's going on with the patient's eye in your own words — keeping it anonymous (e.g. \u201Cpatient in their 50s, sudden flashing lights and floaters, very short-sighted\u201D). I'll ask a few quick questions, then tell you how urgently they should be seen. Please don't include names or other identifying details.");
+  row.appendChild(b); aiMsgs.appendChild(row); aiScroll();
+}
+function renderUserAi(text){ const row=el('div','row user'); row.appendChild(el('div','bubble user',esc(text))); aiMsgs.appendChild(row); aiScroll(); }
+function renderAssistantAi(text){
+  const tier=(text.match(/\[\[TIER:(t[1-5])\]\]/)||[])[1];
+  const optM=text.match(/\[\[OPTIONS:([^\]]*)\]\]/);
+  const options=optM?optM[1].split('|').map(s=>s.trim()).filter(Boolean):null;
+  let clean=text.replace(/\[\[TIER:t[1-5]\]\]/,'').replace(/\[\[OPTIONS:[^\]]*\]\]/,'').trim();
+  const row=el('div','row');
+  if(tier && TIERS[tier]){
+    const card=el('div','ai-outcome '+tier);
+    const t=TIERS[tier];
+    const banner=el('div','banner');
+    banner.appendChild(el('div','tlabel',esc(t.label)));
+    banner.appendChild(el('div','tsub',esc(t.sub)));
+    card.appendChild(banner);
+    card.appendChild(el('div','ab',esc(clean)));
+    row.appendChild(card);
+  } else {
+    const b=el('div','bubble bot',esc(clean));
+    if(options&&options.length){
+      const q=el('div','quick');
+      options.forEach(o=>{ const bt=el('button',null,esc(o)); bt.type='button'; bt.addEventListener('click',()=>sendAI(o)); q.appendChild(bt); });
+      b.appendChild(q);
+    }
+    row.appendChild(b);
+  }
+  aiMsgs.appendChild(row); aiScroll();
+}
+function showTyping(){ const row=el('div','row'); row.id='aiTyping'; const b=el('div','bubble bot'); b.innerHTML='<span class="typing"><span></span><span></span><span></span></span>'; row.appendChild(b); aiMsgs.appendChild(row); aiScroll(); }
+function hideTyping(){ const t=document.getElementById('aiTyping'); if(t) t.remove(); }
+
+async function sendAI(text){
+  text=(text||'').trim(); if(!text||aiBusy) return;
+  renderUserAi(text); aiHistory.push({role:'user',content:text});
+  aiText.value=''; autosize(); aiBusy=true; aiSend.disabled=true; showTyping();
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:1000, system:SYSTEM_AI, messages:aiHistory })
+    });
+    const data=await res.json();
+    hideTyping();
+    let out='';
+    if(data && data.content && Array.isArray(data.content)){ out=data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n').trim(); }
+    if(!out){ renderAssistantAi("Sorry, I couldn't get a response. Please try again, or use the guided questions."); }
+    else { aiHistory.push({role:'assistant',content:out}); renderAssistantAi(out); }
+  }catch(e){
+    hideTyping();
+    renderAssistantAi("I can't reach the assistant right now. AI-assisted mode only works inside the Claude app with internet — please go back and use the guided questions instead.");
+  }finally{ aiBusy=false; aiSend.disabled=false; }
+}
+aiSend.addEventListener('click',()=>sendAI(aiText.value));
+aiText.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendAI(aiText.value); } });
+function autosize(){ aiText.style.height='auto'; aiText.style.height=Math.min(aiText.scrollHeight,140)+'px'; }
+aiText.addEventListener('input',autosize);
+
+document.getElementById('homeAI').addEventListener('click',showAIIntro);
+document.getElementById('aiIntroBack').addEventListener('click',showHome);
+document.getElementById('aiIntroGuided').addEventListener('click',startGuided);
+document.getElementById('aiIntroContinue').addEventListener('click',showAI);
+document.getElementById('aiBackBtn').addEventListener('click',showHome);
+document.getElementById('aiClearBtn').addEventListener('click',function(){ aiHistory=[]; aiMsgs.innerHTML=''; aiGreeting(); });
 
 showHome();
 </script>
